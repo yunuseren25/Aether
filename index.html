@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AETHER // Ortak Stüdyo & Groq AI</title>
+  <title>AETHER STUDIO // Ortak Sohbet & Groq AI</title>
   <style>
     :root {
       --bg: #070b14;
@@ -14,7 +14,6 @@
       --violet: #a855f7;
       --green: #22c55e;
       --red: #fb7185;
-      --amber: #fbbf24;
       --text: #f8fafc;
       --muted: #94a3b8;
     }
@@ -289,7 +288,7 @@
       </div>
       <div class="badges">
         <span class="badge ok" id="roomBadge">ODA: HAZIR</span>
-        <span class="badge" id="groqBadge">GROQ: KEY GİRİLİNCE AKTİF</span>
+        <span class="badge" id="groqBadge">GROQ: BEKLİYOR</span>
       </div>
     </header>
 
@@ -304,7 +303,7 @@
       </div>
       <div>
         <label for="groqInp">Groq API Key</label>
-        <input type="password" id="groqInp" placeholder="gsk_... anahtarını yapıştır" oninput="saveState(); refreshGroqBadge();" />
+        <input type="password" id="groqInp" placeholder="gsk_... anahtarını yapıştır" oninput="saveState(); fetchGroqModels(true);" />
       </div>
       <button class="btn cyan" type="button" onclick="connectNow()">BAĞLAN / SENKRONLA</button>
     </section>
@@ -314,7 +313,7 @@
         <section class="panel">
           <div class="panel-top">
             <h2>Canlı Sohbet</h2>
-            <span class="hint"><code>@ai</code> yazarsan Groq sohbete girer</span>
+            <span class="hint"><code>@ai</code> yazarsan Groq yanıt verir</span>
           </div>
           <div class="chat-list" id="chatList"></div>
           <div style="display:flex; gap:8px;">
@@ -327,9 +326,8 @@
         <section class="panel">
           <div class="panel-top">
             <h2>Groq Yapay Zeka Asistanı</h2>
-            <select id="modelSel" style="width:auto; padding:6px 10px; font-size:0.75rem;" onchange="saveState()">
-              <option value="llama-3.3-70b-versatile" selected>llama-3.3-70b-versatile</option>
-              <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+            <select id="modelSel" style="width:auto; max-width:220px; padding:6px 10px; font-size:0.75rem;" onchange="saveState()">
+              <option value="">Otomatik Aktif Model</option>
             </select>
           </div>
           <div style="display:flex; gap:8px;">
@@ -376,15 +374,15 @@
   </div>
 
   <script>
-    const STATE_KEY = "aether_v3_state";
-    const ROOM_PREFIX = "aether_v3_room_";
-    const RELAY_URL = "https://kvdb.io";
+    const STATE_KEY = "aether_v4_state";
+    const ROOM_PREFIX = "aether_v4_room_";
 
     let messages = [];
     let notes = [];
     let seen = new Set();
     let bc = null;
     let pollId = null;
+    let availableModels = [];
 
     const SYSTEM_PROMPT = `Sen Türkçe konuşan, samimi, doğrudan ve zihni açan bir yapay zeka asistanısın.
 Kullanıcı (Yunus) ve arkadaşı Alperen ile uzay-zaman, galaksi, dünyanın kancaları, zihin döngüleri ve kilitlenmiş düşünceler üzerine derin ama net sohbetler yapıyorsun.
@@ -418,29 +416,12 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
           if (st.name !== undefined) document.getElementById("nameInp").value = st.name;
           if (st.room !== undefined) document.getElementById("roomInp").value = st.room;
           if (st.groqKey !== undefined) document.getElementById("groqInp").value = st.groqKey;
-          if (st.model) document.getElementById("modelSel").value = st.model;
+          if (st.model) document.getElementById("modelSel").dataset.savedModel = st.model;
         }
       } catch (_) {}
 
-      if (!document.getElementById("nameInp").value.trim()) {
-        document.getElementById("nameInp").value = "Yunus";
-      }
-      if (!document.getElementById("roomInp").value.trim()) {
-        document.getElementById("roomInp").value = "alperen-yunus-1903";
-      }
-      refreshGroqBadge();
-    }
-
-    function refreshGroqBadge() {
-      const key = document.getElementById("groqInp").value.trim();
-      const b = document.getElementById("groqBadge");
-      if (key.length >= 12) {
-        b.textContent = "GROQ: HAZIR";
-        b.className = "badge ok";
-      } else {
-        b.textContent = "GROQ: KEY GİRİLİNCE AKTİF";
-        b.className = "badge";
-      }
+      if (!document.getElementById("nameInp").value.trim()) document.getElementById("nameInp").value = "Yunus";
+      if (!document.getElementById("roomInp").value.trim()) document.getElementById("roomInp").value = "alperen-yunus-1903";
     }
 
     function setLog(id, text, type = "") {
@@ -456,6 +437,51 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    async function fetchGroqModels(silent = false) {
+      const apiKey = document.getElementById("groqInp").value.trim();
+      const badge = document.getElementById("groqBadge");
+      const sel = document.getElementById("modelSel");
+
+      if (!apiKey || apiKey.length < 10) {
+        badge.textContent = "GROQ: KEY GİR";
+        badge.className = "badge";
+        return;
+      }
+
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${apiKey}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
+
+        const list = (data.data || [])
+          .map((m) => m.id)
+          .filter(Boolean)
+          .filter((id) => !/whisper|guard|tts|distil-whisper/i.test(id));
+
+        availableModels = list;
+        const savedModel = sel.dataset.savedModel || sel.value;
+        sel.innerHTML = `<option value="">Otomatik Aktif Model</option>` + list
+          .map((id) => `<option value="${esc(id)}">${esc(id)}</option>`)
+          .join("");
+
+        if (savedModel && list.includes(savedModel)) {
+          sel.value = savedModel;
+        } else if (list.length) {
+          const preferred = list.find((m) => /llama-3\.3|llama-3\.1|gemma2|qwen/i.test(m)) || list[0];
+          sel.value = preferred;
+        }
+
+        badge.textContent = `GROQ: AKTİF (${list.length} MODEL)`;
+        badge.className = "badge ok";
+      } catch (err) {
+        badge.textContent = "GROQ: KEY / BAĞLANTI HATASI";
+        badge.className = "badge";
+        if (!silent) setLog("aiLog", `Groq model listesi alınamadı: ${err.message}`, "err");
+      }
     }
 
     function loadRoomData() {
@@ -512,38 +538,72 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       }
     }
 
-    function relayKey() {
-      return `aether_relay_${cleanRoom().replace(/[^a-z0-9]/g, "_")}`;
+    function safeSlug() {
+      return cleanRoom().replace(/[^a-z0-9]/g, "_");
     }
 
-    async function syncWithRelay(pushObj = null) {
-      const key = relayKey();
-      const url = `${RELAY_URL}/${key}/room.json`;
-      try {
-        let current = { events: [] };
-        const getRes = await fetch(url, { cache: "no-store" });
-        if (getRes.ok) {
-          const json = await getRes.json();
-          if (json && Array.isArray(json.events)) current.events = json.events;
-        }
-
-        if (pushObj) {
-          if (!current.events.some((x) => x.id === pushObj.id)) {
-            current.events.push(pushObj);
-            current.events = current.events.slice(-180);
-            await fetch(url, {
+    async function broadcastRemote(ev) {
+      const slug = safeSlug();
+      const tasks = [
+        fetch(`https://ntfy.sh/aether_${slug}`, {
+          method: "POST",
+          body: JSON.stringify(ev)
+        }).then((r) => r.ok),
+        (async () => {
+          const url = `https://kvdb.io/aether_relay_${slug}/data.json`;
+          let cur = { events: [] };
+          const g = await fetch(url, { cache: "no-store" });
+          if (g.ok) {
+            const j = await g.json();
+            if (j && Array.isArray(j.events)) cur.events = j.events;
+          }
+          if (!cur.events.some((x) => x.id === ev.id)) {
+            cur.events.push(ev);
+            cur.events = cur.events.slice(-180);
+            const p = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(current)
+              body: JSON.stringify(cur)
             });
+            return p.ok;
+          }
+          return true;
+        })()
+      ];
+
+      const results = await Promise.allSettled(tasks);
+      return results.some((r) => r.status === "fulfilled" && r.value === true);
+    }
+
+    async function pullRemote() {
+      const slug = safeSlug();
+
+      try {
+        const r1 = await fetch(`https://ntfy.sh/aether_${slug}/json?poll=1&since=30m`, { cache: "no-store" });
+        if (r1.ok) {
+          const txt = await r1.text();
+          for (const line of txt.split("\n")) {
+            const t = line.trim();
+            if (!t) continue;
+            try {
+              const outer = JSON.parse(t);
+              if (outer.event === "message" && outer.message) {
+                applyEvent(JSON.parse(outer.message));
+              }
+            } catch (_) {}
           }
         }
+      } catch (_) {}
 
-        current.events.forEach((ev) => applyEvent(ev));
-        return true;
-      } catch (_) {
-        return false;
-      }
+      try {
+        const r2 = await fetch(`https://kvdb.io/aether_relay_${slug}/data.json`, { cache: "no-store" });
+        if (r2.ok) {
+          const j = await r2.json();
+          if (j && Array.isArray(j.events)) {
+            j.events.forEach((ev) => applyEvent(ev));
+          }
+        }
+      } catch (_) {}
     }
 
     function connectNow() {
@@ -552,17 +612,17 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       if (bc) bc.close();
 
       loadRoomData();
+      fetchGroqModels(true);
+
       const r = cleanRoom();
       bc = new BroadcastChannel(`aether_bc_${r}`);
       bc.onmessage = (e) => applyEvent(e.data);
 
-      syncWithRelay().then((ok) => {
-        setLog("chatLog", ok ? "Oda senkronize edildi." : "Yerel mod aktif (harici sunucuya ulaşılamadı, aynı cihaz/sekme çalışır).", ok ? "ok" : "");
+      pullRemote().then(() => {
+        setLog("chatLog", `Oda (${r}) bağlandı ve senkronlandı.`, "ok");
       });
 
-      pollId = setInterval(() => {
-        syncWithRelay();
-      }, 3000);
+      pollId = setInterval(pullRemote, 2500);
     }
 
     function renderChat() {
@@ -571,7 +631,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       box.innerHTML = "";
 
       if (!messages.length) {
-        box.innerHTML = `<div class="hint">Henüz mesaj yok kanka. Altta mesaj yazıp GÖNDER'e bas.</div>`;
+        box.innerHTML = `<div class="hint">Henüz mesaj yok. Yazıp GÖNDER'e bas; Alperen de aynı oda kodunu girerse mesajlarınız görünür.</div>`;
         return;
       }
 
@@ -614,8 +674,8 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       applyEvent(ev);
       if (bc) bc.postMessage(ev);
 
-      const synced = await syncWithRelay(ev);
-      setLog("chatLog", synced ? "Gönderildi." : "Yerelde kaydedildi (ağ senkronu bekleniyor).", synced ? "ok" : "");
+      const ok = await broadcastRemote(ev);
+      setLog("chatLog", ok ? "Mesaj iletildi." : "Yerelde kaydedildi; ağ bağlantısını kontrol et.", ok ? "ok" : "err");
 
       if (/^@ai\b/i.test(text)) {
         const q = text.replace(/^@ai\b/i, "").trim() || "Sohbetteki konuyu değerlendir.";
@@ -633,7 +693,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
           const aiEv = { id: `ev_${aiMsg.id}`, type: "msg", msg: aiMsg };
           applyEvent(aiEv);
           if (bc) bc.postMessage(aiEv);
-          await syncWithRelay(aiEv);
+          await broadcastRemote(aiEv);
           setLog("chatLog", "Groq AI yanıtladı.", "ok");
         } catch (err) {
           setLog("chatLog", `Groq hatası: ${err.message}`, "err");
@@ -646,39 +706,55 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
 
     async function askGroq(prompt, extraSys = "") {
       const apiKey = document.getElementById("groqInp").value.trim();
-      const model = document.getElementById("modelSel").value || "llama-3.3-70b-versatile";
-      if (!apiKey) {
-        throw new Error("Groq API Key girilmemiş.");
+      if (!apiKey) throw new Error("Groq API Key girilmemiş.");
+
+      if (!availableModels.length) {
+        await fetchGroqModels(true);
       }
 
+      let model = document.getElementById("modelSel").value || availableModels[0] || "llama-3.1-8b-instant";
       const recent = messages.slice(-8).map((m) => `${m.who}: ${m.text}`).join("\n");
       const sys = `${SYSTEM_PROMPT}${extraSys ? `\nEk talimat: ${extraSys}` : ""}${recent ? `\nSon sohbet:\n${recent}` : ""}`;
 
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.75,
-          max_tokens: 900,
-          messages: [
-            { role: "system", content: sys },
-            { role: "user", content: prompt }
-          ]
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error?.message || `HTTP ${res.status}`);
+      async function tryModel(mName) {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: mName,
+            temperature: 0.75,
+            max_tokens: 900,
+            messages: [
+              { role: "system", content: sys },
+              { role: "user", content: prompt }
+            ]
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const err = new Error(data?.error?.message || `HTTP ${res.status}`);
+          err.status = res.status;
+          throw err;
+        }
+        const out = data?.choices?.[0]?.message?.content?.trim();
+        if (!out) throw new Error("Boş yanıt döndü.");
+        return out;
       }
 
-      const out = data?.choices?.[0]?.message?.content?.trim();
-      if (!out) throw new Error("Boş yanıt döndü.");
-      return out;
+      try {
+        return await tryModel(model);
+      } catch (err) {
+        const fallback = availableModels.find((m) => m !== model);
+        if (fallback && (err.status === 404 || err.status === 400 || /model/i.test(err.message))) {
+          document.getElementById("modelSel").value = fallback;
+          saveState();
+          return await tryModel(fallback);
+        }
+        throw err;
+      }
     }
 
     async function runAi() {
@@ -764,7 +840,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       const ev = { id: `ev_${note.id}`, type: "note", note };
       applyEvent(ev);
       if (bc) bc.postMessage(ev);
-      await syncWithRelay(ev);
+      await broadcastRemote(ev);
     }
 
     async function addNote() {
@@ -780,7 +856,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       const ev = { id: `ev_del_${id}_${Date.now()}`, type: "del_note", targetId: id };
       applyEvent(ev);
       if (bc) bc.postMessage(ev);
-      await syncWithRelay(ev);
+      await broadcastRemote(ev);
     }
 
     function renderNotes() {
