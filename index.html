@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AETHER CHAT</title>
+  <title>AETHER CHAT // Firebase</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
@@ -16,7 +16,7 @@
     }
     .app {
       width: 100%;
-      max-width: 740px;
+      max-width: 760px;
       background: #0d1424;
       border: 1px solid #1e293b;
       border-radius: 16px;
@@ -42,10 +42,15 @@
       font-size: 0.75rem;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(34, 197, 94, 0.12);
-      color: #86efac;
-      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: #162036;
+      color: #94a3b8;
+      border: 1px solid #263554;
       font-weight: 700;
+    }
+    .pill.live {
+      color: #86efac;
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.12);
     }
     .bar {
       display: grid;
@@ -76,6 +81,7 @@
       font-size: 0.88rem;
       cursor: pointer;
     }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
     .feed {
       height: 360px;
       overflow-y: auto;
@@ -114,96 +120,115 @@
       display: flex;
       gap: 8px;
     }
-    .note {
-      font-size: 0.76rem;
+    .status {
+      font-size: 0.78rem;
       color: #94a3b8;
-      line-height: 1.4;
+      min-height: 18px;
+      word-break: break-word;
     }
+    .status.ok { color: #86efac; }
+    .status.err { color: #fda4af; }
+    details {
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+    summary { cursor: pointer; user-select: none; margin-bottom: 6px; }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="top">
       <h1>AETHER CHAT</h1>
-      <span class="pill" id="pill">Hazır</span>
+      <span class="pill" id="pill">URL Bekleniyor</span>
     </div>
 
     <div class="bar">
-      <input id="nick" value="Yunus" placeholder="Adın" oninput="saveMeta()" />
-      <input id="room" value="alperen-yunus-1903" placeholder="Oda kodu" oninput="switchRoom()" />
-      <button type="button" onclick="clearRoom()">Odayı Temizle</button>
+      <input id="nick" value="Kanka" placeholder="Adın" oninput="saveCfg()" />
+      <input id="room" value="alperen-yunus-1903" placeholder="Oda kodu" oninput="connectRoom()" />
+      <button type="button" onclick="connectRoom()">Bağlan</button>
     </div>
+
+    <details open>
+      <summary>Firebase Realtime Database URL</summary>
+      <input id="dbUrl" placeholder="https://senin-projen-default-rtdb.firebaseio.com" oninput="saveCfg()" />
+    </details>
 
     <div class="feed" id="feed"></div>
 
     <div class="send-row">
-      <input id="msgInp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') sendMessage()" />
-      <button type="button" onclick="sendMessage()">Gönder</button>
+      <input id="msgInp" placeholder="Alperen'e mesaj yaz..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button type="button" id="sendBtn" onclick="sendMessage()">Gönder</button>
     </div>
 
-    <div class="note">
-      Aynı cihazda ikinci bir sekme açıp aynı oda kodunu girersen anında senkron çalışır. Farklı cihazlardan dışarıya mesaj taşımak için gerçek bir arka uç/veritabanı gerekir.
-    </div>
+    <div class="status" id="status">Firebase Database URL girip Bağlan'a bas.</div>
   </div>
 
   <script>
-    const META_KEY = "aether_nosb_meta_v1";
-    const ROOM_PREFIX = "aether_nosb_room_v1_";
-    let bc = null;
+    const CFG_KEY = "aether_fb_chat_v1";
+    let timer = null;
+
+    function setStatus(msg, type = "") {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = `status ${type}`;
+    }
+
+    function setPill(live, text) {
+      const p = document.getElementById("pill");
+      p.textContent = text;
+      p.className = `pill ${live ? "live" : ""}`;
+    }
 
     function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({
+      return String(s ?? "").replace(/[&<>"']/g, ch => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[c]));
+      }[ch]));
     }
 
-    function roomName() {
-      return (document.getElementById("room").value || "alperen-yunus-1903").trim() || "alperen-yunus-1903";
+    function cleanDbUrl() {
+      const raw = (document.getElementById("dbUrl").value || "").trim();
+      const match = raw.match(/https:\/\/[a-zA-Z0-9.-]+firebaseio\.com|https:\/\/[a-zA-Z0-9.-]+firebasedatabase\.app/);
+      return (match ? match[0] : raw).replace(/\/+$/, "");
     }
 
-    function nickName() {
-      return (document.getElementById("nick").value || "Yunus").trim() || "Yunus";
+    function cleanRoom() {
+      const r = (document.getElementById("room").value || "alperen-yunus-1903").trim();
+      return r.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
     }
 
-    function saveMeta() {
+    function cleanNick() {
+      return (document.getElementById("nick").value || "Kanka").trim() || "Kanka";
+    }
+
+    function saveCfg() {
       try {
-        localStorage.setItem(META_KEY, JSON.stringify({ nick: nickName(), room: roomName() }));
+        localStorage.setItem(CFG_KEY, JSON.stringify({
+          dbUrl: cleanDbUrl(),
+          room: cleanRoom(),
+          nick: cleanNick()
+        }));
       } catch (_) {}
-      renderFeed(readRoom());
     }
 
-    function loadMeta() {
+    function loadCfg() {
       try {
-        const raw = localStorage.getItem(META_KEY);
+        const raw = localStorage.getItem(CFG_KEY);
         if (!raw) return;
-        const d = JSON.parse(raw);
-        if (d.nick) document.getElementById("nick").value = d.nick;
-        if (d.room) document.getElementById("room").value = d.room;
+        const c = JSON.parse(raw);
+        if (c.dbUrl) document.getElementById("dbUrl").value = c.dbUrl;
+        if (c.room) document.getElementById("room").value = c.room;
+        if (c.nick) document.getElementById("nick").value = c.nick;
       } catch (_) {}
     }
 
-    function readRoom() {
-      try {
-        return JSON.parse(localStorage.getItem(ROOM_PREFIX + roomName()) || "[]");
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function writeRoom(list) {
-      try {
-        localStorage.setItem(ROOM_PREFIX + roomName(), JSON.stringify(list.slice(-200)));
-      } catch (_) {}
-    }
-
-    function renderFeed(list) {
+    function renderFeed(items) {
       const feed = document.getElementById("feed");
-      const me = nickName();
-      if (!list.length) {
-        feed.innerHTML = `<div class="note">Bu odada henüz mesaj yok kanka.</div>`;
+      const me = cleanNick();
+      if (!items.length) {
+        feed.innerHTML = `<div class="status">Bu odada henüz mesaj yok kanka. İlk mesajı sen at!</div>`;
         return;
       }
-      feed.innerHTML = list.map(m => {
+      feed.innerHTML = items.map(m => {
         const isMe = m.who === me;
         return `
           <div class="msg ${isMe ? "me" : ""}">
@@ -215,64 +240,100 @@
       feed.scrollTop = feed.scrollHeight;
     }
 
-    function pushMessage(item, emit = true) {
-      const list = readRoom();
-      if (list.some(x => x.id === item.id)) return;
-      list.push(item);
-      writeRoom(list);
-      renderFeed(list);
-      if (emit && bc) {
-        bc.postMessage({ room: roomName(), item });
+    async function pullMessages(manual = false) {
+      const base = cleanDbUrl();
+      const room = cleanRoom();
+      if (!base) {
+        setPill(false, "URL Bekleniyor");
+        setStatus("Önce Firebase Realtime Database URL gir.", "err");
+        return;
+      }
+
+      const url = `${base}/rooms/${encodeURIComponent(room)}.json`;
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        const raw = await res.text();
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch (_) {
+          throw new Error(`Beklenmeyen yanıt (${res.status}): ${raw.slice(0, 70)}`);
+        }
+        if (!res.ok) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+        const list = data && typeof data === "object"
+          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+          : [];
+        renderFeed(list);
+        setPill(true, `Oda: ${room}`);
+        if (manual) {
+          setStatus(`Bağlandı (${new Date().toLocaleTimeString("tr-TR")})`, "ok");
+        }
+      } catch (err) {
+        setPill(false, "Bağlantı Hatası");
+        setStatus(`Okuma hatası: ${err.message}`, "err");
       }
     }
 
-    function sendMessage() {
+    async function sendMessage() {
+      const base = cleanDbUrl();
+      const room = cleanRoom();
       const inp = document.getElementById("msgInp");
+      const btn = document.getElementById("sendBtn");
       const text = inp.value.trim();
       if (!text) return;
-      const item = {
-        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        who: nickName(),
-        time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
-        text
-      };
-      inp.value = "";
-      pushMessage(item, true);
-      inp.focus();
-    }
-
-    function clearRoom() {
-      writeRoom([]);
-      renderFeed([]);
-      if (bc) bc.postMessage({ room: roomName(), clear: true });
-    }
-
-    function switchRoom() {
-      saveMeta();
-      const r = roomName();
-      document.getElementById("pill").textContent = `Oda: ${r}`;
-      if (bc) bc.close();
-      bc = new BroadcastChannel("aether_nosb_channel_" + r);
-      bc.onmessage = (ev) => {
-        if (!ev.data || ev.data.room !== r) return;
-        if (ev.data.clear) {
-          writeRoom([]);
-          renderFeed([]);
-        } else if (ev.data.item) {
-          pushMessage(ev.data.item, false);
-        }
-      };
-      renderFeed(readRoom());
-    }
-
-    window.addEventListener("storage", (e) => {
-      if (e.key === ROOM_PREFIX + roomName()) {
-        renderFeed(readRoom());
+      if (!base) {
+        setStatus("Önce Firebase Database URL gir.", "err");
+        return;
       }
-    });
 
-    loadMeta();
-    switchRoom();
+      saveCfg();
+      btn.disabled = true;
+      setStatus("Gönderiliyor...");
+
+      const payload = {
+        who: cleanNick(),
+        text,
+        time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+        ts: Date.now()
+      };
+
+      try {
+        const res = await fetch(`${base}/rooms/${encodeURIComponent(room)}.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const raw = await res.text();
+        let data = null;
+        try { data = JSON.parse(raw); } catch (_) {}
+        if (!res.ok) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+        inp.value = "";
+        await pullMessages(true);
+      } catch (err) {
+        setStatus(`Gönderim hatası: ${err.message}`, "err");
+      } finally {
+        btn.disabled = false;
+        inp.focus();
+      }
+    }
+
+    function connectRoom() {
+      const cleaned = cleanDbUrl();
+      if (cleaned) document.getElementById("dbUrl").value = cleaned;
+      saveCfg();
+      if (timer) clearInterval(timer);
+      pullMessages(true);
+      timer = setInterval(() => pullMessages(false), 2000);
+    }
+
+    loadCfg();
+    if (cleanDbUrl()) {
+      connectRoom();
+    }
   </script>
 </body>
 </html>
