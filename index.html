@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AETHER STUDIO // Ortak Sohbet & Groq AI</title>
+  <title>AETHER STUDIO // Alperen & Biz Ortak Alan</title>
   <style>
     :root {
-      --bg: #070b14;
-      --card: #0f172a;
-      --card-2: #162038;
+      --bg: #060a13;
+      --card: #0e1628;
+      --card-2: #152038;
       --border: rgba(148, 163, 184, 0.16);
       --cyan: #22d3ee;
       --violet: #a855f7;
@@ -27,12 +27,12 @@
 
     body {
       background:
-        radial-gradient(circle at 15% 0%, rgba(34, 211, 238, 0.12), transparent 36%),
-        radial-gradient(circle at 85% 5%, rgba(168, 85, 247, 0.13), transparent 40%),
+        radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.12), transparent 36%),
+        radial-gradient(circle at 88% 5%, rgba(168, 85, 247, 0.13), transparent 40%),
         var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 16px 12px 54px;
+      padding: 16px 12px 56px;
     }
 
     .container {
@@ -193,7 +193,7 @@
     }
 
     .chat-list {
-      height: 280px;
+      height: 290px;
       overflow-y: auto;
       background: #060a12;
       border: 1px solid var(--border);
@@ -283,7 +283,7 @@
   <div class="container">
     <header class="header">
       <div>
-        <h1>AETHER STUDIO // ORTAK SOHBET & GROQ AI</h1>
+        <h1>AETHER STUDIO // ORTAK ODA & GROQ AI</h1>
         <p>Uzay-zaman, galaksi, dünyanın kancaları, zihin ve kilitli düşünceler için ortak alan.</p>
       </div>
       <div class="badges">
@@ -374,8 +374,8 @@
   </div>
 
   <script>
-    const STATE_KEY = "aether_v5_state";
-    const ROOM_PREFIX = "aether_v5_room_";
+    const STATE_KEY = "aether_final_state_v1";
+    const ROOM_PREFIX = "aether_final_room_v1_";
 
     let messages = [];
     let notes = [];
@@ -396,6 +396,10 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
     function cleanRoom() {
       const raw = (document.getElementById("roomInp").value || "alperen-yunus-1903").trim().toLowerCase();
       return raw.replace(/[^a-z0-9_-]/g, "-") || "alperen-yunus-1903";
+    }
+
+    function safeSlug() {
+      return cleanRoom().replace(/[^a-z0-9]/g, "_");
     }
 
     function saveState() {
@@ -478,9 +482,9 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
         badge.textContent = `GROQ: AKTİF (${list.length} MODEL)`;
         badge.className = "badge ok";
       } catch (err) {
-        badge.textContent = "GROQ: KEY / BAĞLANTI HATASI";
+        badge.textContent = "GROQ: KEY / AĞ HATASI";
         badge.className = "badge";
-        if (!silent) setLog("aiLog", `Groq model listesi alınamadı: ${err.message}`, "err");
+        if (!silent) setLog("aiLog", `Groq model hatası: ${err.message}`, "err");
       }
     }
 
@@ -538,28 +542,47 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       }
     }
 
-    function safeSlug() {
-      return cleanRoom().replace(/[^a-z0-9]/g, "_");
-    }
-
     async function broadcastRemote(ev) {
       const slug = safeSlug();
-      try {
-        const r = await fetch(`https://ntfy.sh/aether_${slug}`, {
+      const tasks = [
+        fetch(`https://ntfy.sh/aether_${slug}`, {
           method: "POST",
           body: JSON.stringify(ev)
-        });
-        return r.ok;
-      } catch (_) {
-        return false;
-      }
+        }).then((r) => r.ok),
+        (async () => {
+          const url = `https://kvdb.io/aether_relay_${slug}/data.json`;
+          let cur = { events: [] };
+          const g = await fetch(url, { cache: "no-store" });
+          if (g.ok) {
+            const j = await g.json();
+            if (j && Array.isArray(j.events)) cur.events = j.events;
+          }
+          if (!cur.events.some((x) => x.id === ev.id)) {
+            cur.events.push(ev);
+            cur.events = cur.events.slice(-180);
+            const p = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(cur)
+            });
+            return p.ok;
+          }
+          return true;
+        })()
+      ];
+
+      const results = await Promise.allSettled(tasks);
+      return results.some((r) => r.status === "fulfilled" && r.value === true);
     }
 
     async function pullRemote() {
       const slug = safeSlug();
+      let anyReachable = false;
+
       try {
         const r1 = await fetch(`https://ntfy.sh/aether_${slug}/json?poll=1&since=1h`, { cache: "no-store" });
         if (r1.ok) {
+          anyReachable = true;
           const txt = await r1.text();
           for (const line of txt.split("\n")) {
             const t = line.trim();
@@ -573,6 +596,19 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
           }
         }
       } catch (_) {}
+
+      try {
+        const r2 = await fetch(`https://kvdb.io/aether_relay_${slug}/data.json`, { cache: "no-store" });
+        if (r2.ok) {
+          anyReachable = true;
+          const j = await r2.json();
+          if (j && Array.isArray(j.events)) {
+            j.events.forEach((ev) => applyEvent(ev));
+          }
+        }
+      } catch (_) {}
+
+      return anyReachable;
     }
 
     function connectNow() {
@@ -587,8 +623,12 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       bc = new BroadcastChannel(`aether_bc_${r}`);
       bc.onmessage = (e) => applyEvent(e.data);
 
-      pullRemote().then(() => {
-        setLog("chatLog", `Oda (${r}) bağlandı ve senkronlandı.`, "ok");
+      pullRemote().then((ok) => {
+        setLog(
+          "chatLog",
+          ok ? `Oda (${r}) senkronlandı.` : `Yerel/sekme modu aktif (${r}); ağdaki olası kısıtlar kontrol ediliyor.`,
+          ok ? "ok" : ""
+        );
       });
 
       pollId = setInterval(pullRemote, 2500);
@@ -600,7 +640,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       box.innerHTML = "";
 
       if (!messages.length) {
-        box.innerHTML = `<div class="hint">Henüz mesaj yok. Yazıp GÖNDER'e bas; Alperen de aynı oda kodunu girerse mesajlarınız görünür.</div>`;
+        box.innerHTML = `<div class="hint">Henüz mesaj yok kanka. Mesaj yazıp GÖNDER'e bas; Alperen de aynı oda kodunu girerse mesajlarınız görünür.</div>`;
         return;
       }
 
@@ -644,7 +684,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
       if (bc) bc.postMessage(ev);
 
       const ok = await broadcastRemote(ev);
-      setLog("chatLog", ok ? "Mesaj iletildi." : "Yerelde kaydedildi; ağ bağlantısını kontrol et.", ok ? "ok" : "err");
+      setLog("chatLog", ok ? "Mesaj iletildi." : "Yerelde kaydedildi; ağ/kanal erişimi kapalı olabilir.", ok ? "ok" : "err");
 
       if (/^@ai\b/i.test(text)) {
         const q = text.replace(/^@ai\b/i, "").trim() || "Sohbetteki konuyu değerlendir.";
