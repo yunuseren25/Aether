@@ -3,894 +3,276 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AETHER STUDIO // Alperen & Biz Ortak Alan</title>
+  <title>AETHER CHAT</title>
   <style>
-    :root {
-      --bg: #060a13;
-      --card: #0e1628;
-      --card-2: #152038;
-      --border: rgba(148, 163, 184, 0.16);
-      --cyan: #22d3ee;
-      --violet: #a855f7;
-      --green: #22c55e;
-      --red: #fb7185;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
-      background:
-        radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.12), transparent 36%),
-        radial-gradient(circle at 88% 5%, rgba(168, 85, 247, 0.13), transparent 40%),
-        var(--bg);
-      color: var(--text);
+      background: #060911;
+      color: #f8fafc;
       min-height: 100vh;
-      padding: 16px 12px 56px;
-    }
-
-    .container {
-      max-width: 1220px;
-      margin: 0 auto;
       display: flex;
-      flex-direction: column;
-      gap: 14px;
+      justify-content: center;
+      padding: 16px;
     }
-
-    .header {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .header h1 {
-      font-size: 1.15rem;
-      font-weight: 900;
-      background: linear-gradient(90deg, var(--cyan), var(--violet));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header p {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
-    .badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      padding: 6px 11px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      background: var(--card-2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-
-    .badge.ok {
-      color: #86efac;
-      border-color: rgba(34, 197, 94, 0.4);
-      background: rgba(34, 197, 94, 0.12);
-    }
-
-    .setup-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px 16px;
-      display: grid;
-      grid-template-columns: 1fr 1.2fr 1.3fr auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    @media (max-width: 860px) {
-      .setup-box { grid-template-columns: 1fr; }
-    }
-
-    label {
-      display: block;
-      font-size: 0.7rem;
-      font-weight: 800;
-      color: var(--muted);
-      margin-bottom: 5px;
-      text-transform: uppercase;
-    }
-
-    input, textarea, select {
+    .app {
       width: 100%;
-      background: var(--card-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 10px 12px;
-      font-size: 0.85rem;
-      outline: none;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--cyan);
-    }
-
-    .btn {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--card-2);
-      color: var(--text);
-      font-size: 0.8rem;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn.cyan { background: var(--cyan); color: #04131a; border: none; }
-    .btn.violet { background: linear-gradient(135deg, var(--cyan), var(--violet)); color: #fff; border: none; }
-    .btn.green { background: var(--green); color: #05180c; border: none; }
-    .btn.rose { background: rgba(251, 113, 133, 0.15); color: #fda4af; border-color: rgba(251, 113, 133, 0.35); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap: 14px;
-      align-items: start;
-    }
-
-    @media (max-width: 920px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-
-    .col {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--border);
+      max-width: 740px;
+      background: #0d1424;
+      border: 1px solid #1e293b;
       border-radius: 16px;
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 11px;
+      gap: 12px;
+      height: fit-content;
     }
-
-    .panel-top {
+    .top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
     }
-
-    .panel-top h2 {
-      font-size: 0.96rem;
+    .top h1 {
+      font-size: 1.05rem;
       font-weight: 800;
+      color: #38bdf8;
     }
-
-    .hint {
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-
-    .chat-list {
-      height: 290px;
-      overflow-y: auto;
-      background: #060a12;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .msg {
-      background: var(--card-2);
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 9px 11px;
-      font-size: 0.84rem;
-      line-height: 1.48;
-    }
-
-    .msg.mine {
-      border-color: rgba(34, 211, 238, 0.38);
-      background: rgba(34, 211, 238, 0.08);
-    }
-
-    .msg.ai {
-      border-color: rgba(168, 85, 247, 0.42);
-      background: rgba(168, 85, 247, 0.1);
-    }
-
-    .msg-head {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      font-weight: 800;
-      margin-bottom: 3px;
-    }
-
-    .msg-who { color: var(--cyan); }
-    .msg.ai .msg-who { color: #e9d5ff; }
-    .msg-time { color: var(--muted); }
-
-    .box-out {
-      background: #060a12;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px;
-      font-size: 0.84rem;
-      line-height: 1.62;
-      color: #e2e8f0;
-      white-space: pre-line;
-      min-height: 125px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .notes {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-
-    .note {
-      background: var(--card-2);
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 9px 11px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 0.82rem;
-    }
-
-    .log {
+    .pill {
       font-size: 0.75rem;
-      min-height: 18px;
-      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      font-weight: 700;
     }
-
-    .log.ok { color: #86efac; }
-    .log.err { color: var(--red); }
+    .bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+    }
+    @media (max-width: 600px) {
+      .bar { grid-template-columns: 1fr; }
+    }
+    input {
+      width: 100%;
+      background: #151f36;
+      border: 1px solid #283859;
+      color: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus { border-color: #38bdf8; }
+    button {
+      background: #38bdf8;
+      color: #04101a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .feed {
+      height: 360px;
+      overflow-y: auto;
+      background: #070b14;
+      border: 1px solid #1b263d;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .msg {
+      background: #131d33;
+      border: 1px solid #20304f;
+      border-radius: 10px;
+      padding: 9px 12px;
+      max-width: 85%;
+    }
+    .msg.me {
+      align-self: flex-end;
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .meta {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-bottom: 3px;
+      font-weight: 700;
+    }
+    .body {
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .send-row {
+      display: flex;
+      gap: 8px;
+    }
+    .note {
+      font-size: 0.76rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <div>
-        <h1>AETHER STUDIO // ORTAK ODA & GROQ AI</h1>
-        <p>Uzay-zaman, galaksi, dünyanın kancaları, zihin ve kilitli düşünceler için ortak alan.</p>
-      </div>
-      <div class="badges">
-        <span class="badge ok" id="roomBadge">ODA: HAZIR</span>
-        <span class="badge" id="groqBadge">GROQ: BEKLİYOR</span>
-      </div>
-    </header>
+  <div class="app">
+    <div class="top">
+      <h1>AETHER CHAT</h1>
+      <span class="pill" id="pill">Hazır</span>
+    </div>
 
-    <section class="setup-box">
-      <div>
-        <label for="nameInp">Adın</label>
-        <input type="text" id="nameInp" placeholder="Örn: Yunus" oninput="saveState()" />
-      </div>
-      <div>
-        <label for="roomInp">Ortak Oda Kodu (Alperen ile aynı)</label>
-        <input type="text" id="roomInp" placeholder="Örn: alperen-yunus-1903" oninput="saveState()" />
-      </div>
-      <div>
-        <label for="groqInp">Groq API Key</label>
-        <input type="password" id="groqInp" placeholder="gsk_... anahtarını yapıştır" oninput="saveState(); fetchGroqModels(true);" />
-      </div>
-      <button class="btn cyan" type="button" onclick="connectNow()">BAĞLAN / SENKRONLA</button>
-    </section>
+    <div class="bar">
+      <input id="nick" value="Yunus" placeholder="Adın" oninput="saveMeta()" />
+      <input id="room" value="alperen-yunus-1903" placeholder="Oda kodu" oninput="switchRoom()" />
+      <button type="button" onclick="clearRoom()">Odayı Temizle</button>
+    </div>
 
-    <div class="grid">
-      <div class="col">
-        <section class="panel">
-          <div class="panel-top">
-            <h2>Canlı Sohbet</h2>
-            <span class="hint"><code>@ai</code> yazarsan Groq yanıt verir</span>
-          </div>
-          <div class="chat-list" id="chatList"></div>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="chatInp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') sendChat()" />
-            <button class="btn cyan" type="button" id="sendBtn" onclick="sendChat()">GÖNDER</button>
-          </div>
-          <div class="log" id="chatLog"></div>
-        </section>
+    <div class="feed" id="feed"></div>
 
-        <section class="panel">
-          <div class="panel-top">
-            <h2>Groq Yapay Zeka Asistanı</h2>
-            <select id="modelSel" style="width:auto; max-width:220px; padding:6px 10px; font-size:0.75rem;" onchange="saveState()">
-              <option value="">Otomatik Aktif Model</option>
-            </select>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="aiInp" placeholder="Kilitlendiğin düşünceyi, uzay-zamanı, galaksiyi veya zihni sor..." onkeydown="if(event.key==='Enter') runAi()" />
-            <button class="btn violet" type="button" id="aiBtn" onclick="runAi()">SOR</button>
-          </div>
-          <div class="box-out" id="aiOut">Groq API keyini girip sorunu yaz. Düşünceleri açmak, uzay-zaman/galaksi/zihin üzerine konuşmak ve kilitleri çözmek için hazır.</div>
-          <div class="log" id="aiLog"></div>
-        </section>
-      </div>
+    <div class="send-row">
+      <input id="msgInp" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button type="button" onclick="sendMessage()">Gönder</button>
+    </div>
 
-      <div class="col">
-        <section class="panel">
-          <div class="panel-top">
-            <h2>Bilgi Araştırma Köşesi</h2>
-            <span class="hint">Groq açıklama + Web arama</span>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <input type="text" id="resInp" style="flex:1; min-width:170px;" placeholder="Araştırılacak kavram..." onkeydown="if(event.key==='Enter') runResearch()" />
-            <button class="btn cyan" type="button" id="resBtn" onclick="runResearch()">ARAŞTIR</button>
-            <button class="btn" type="button" onclick="openGoogle()">WEB</button>
-          </div>
-          <div class="box-out" id="resOut">Araştırmak istediğin konuyu yaz; Groq detaylı anlatsın, istersen notlara ekle.</div>
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-            <span class="log" id="resLog"></span>
-            <button class="btn green" type="button" onclick="copyResToNotes()">NOTLARA EKLE</button>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-top">
-            <h2>Önemli Notlar Köşesi</h2>
-            <span class="hint">Kalıcı kayıt & oda paylaşımı</span>
-          </div>
-          <textarea id="noteInp" style="min-height:66px;" placeholder="Önemli not veya kilit cümle..."></textarea>
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-            <span class="log" id="noteLog"></span>
-            <button class="btn green" type="button" onclick="addNote()">KAYDET</button>
-          </div>
-          <div class="notes" id="notesBox"></div>
-        </section>
-      </div>
+    <div class="note">
+      Aynı cihazda ikinci bir sekme açıp aynı oda kodunu girersen anında senkron çalışır. Farklı cihazlardan dışarıya mesaj taşımak için gerçek bir arka uç/veritabanı gerekir.
     </div>
   </div>
 
   <script>
-    const STATE_KEY = "aether_final_state_v1";
-    const ROOM_PREFIX = "aether_final_room_v1_";
-
-    let messages = [];
-    let notes = [];
-    let seen = new Set();
+    const META_KEY = "aether_nosb_meta_v1";
+    const ROOM_PREFIX = "aether_nosb_room_v1_";
     let bc = null;
-    let pollId = null;
-    let availableModels = [];
-
-    const SYSTEM_PROMPT = `Sen Türkçe konuşan, samimi, doğrudan ve zihni açan bir yapay zeka asistanısın.
-Kullanıcı (Yunus) ve arkadaşı Alperen ile uzay-zaman, galaksi, dünyanın kancaları, zihin döngüleri ve kilitlenmiş düşünceler üzerine derin ama net sohbetler yapıyorsun.
-Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni rahatlatacak somut bir adım ver.`;
-
-    function clockNow() {
-      const d = new Date();
-      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    }
-
-    function cleanRoom() {
-      const raw = (document.getElementById("roomInp").value || "alperen-yunus-1903").trim().toLowerCase();
-      return raw.replace(/[^a-z0-9_-]/g, "-") || "alperen-yunus-1903";
-    }
-
-    function safeSlug() {
-      return cleanRoom().replace(/[^a-z0-9]/g, "_");
-    }
-
-    function saveState() {
-      const st = {
-        name: document.getElementById("nameInp").value,
-        room: document.getElementById("roomInp").value,
-        groqKey: document.getElementById("groqInp").value,
-        model: document.getElementById("modelSel").value
-      };
-      try { localStorage.setItem(STATE_KEY, JSON.stringify(st)); } catch (_) {}
-    }
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STATE_KEY);
-        if (raw) {
-          const st = JSON.parse(raw);
-          if (st.name !== undefined) document.getElementById("nameInp").value = st.name;
-          if (st.room !== undefined) document.getElementById("roomInp").value = st.room;
-          if (st.groqKey !== undefined) document.getElementById("groqInp").value = st.groqKey;
-          if (st.model) document.getElementById("modelSel").dataset.savedModel = st.model;
-        }
-      } catch (_) {}
-
-      if (!document.getElementById("nameInp").value.trim()) document.getElementById("nameInp").value = "Yunus";
-      if (!document.getElementById("roomInp").value.trim()) document.getElementById("roomInp").value = "alperen-yunus-1903";
-    }
-
-    function setLog(id, text, type = "") {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = text;
-      el.className = `log ${type}`;
-    }
 
     function esc(s) {
-      return String(s ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+      return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
     }
 
-    async function fetchGroqModels(silent = false) {
-      const apiKey = document.getElementById("groqInp").value.trim();
-      const badge = document.getElementById("groqBadge");
-      const sel = document.getElementById("modelSel");
-
-      if (!apiKey || apiKey.length < 10) {
-        badge.textContent = "GROQ: KEY GİR";
-        badge.className = "badge";
-        return;
-      }
-
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${apiKey}` }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
-
-        const list = (data.data || [])
-          .map((m) => m.id)
-          .filter(Boolean)
-          .filter((id) => !/whisper|guard|tts|distil-whisper/i.test(id));
-
-        availableModels = list;
-        const savedModel = sel.dataset.savedModel || sel.value;
-        sel.innerHTML = `<option value="">Otomatik Aktif Model</option>` + list
-          .map((id) => `<option value="${esc(id)}">${esc(id)}</option>`)
-          .join("");
-
-        if (savedModel && list.includes(savedModel)) {
-          sel.value = savedModel;
-        } else if (list.length) {
-          const preferred = list.find((m) => /llama-3\.3|llama-3\.1|gemma2|qwen/i.test(m)) || list[0];
-          sel.value = preferred;
-        }
-
-        badge.textContent = `GROQ: AKTİF (${list.length} MODEL)`;
-        badge.className = "badge ok";
-      } catch (err) {
-        badge.textContent = "GROQ: KEY / AĞ HATASI";
-        badge.className = "badge";
-        if (!silent) setLog("aiLog", `Groq model hatası: ${err.message}`, "err");
-      }
+    function roomName() {
+      return (document.getElementById("room").value || "alperen-yunus-1903").trim() || "alperen-yunus-1903";
     }
 
-    function loadRoomData() {
-      const r = cleanRoom();
-      document.getElementById("roomBadge").textContent = `ODA: ${r}`;
-      seen = new Set();
+    function nickName() {
+      return (document.getElementById("nick").value || "Yunus").trim() || "Yunus";
+    }
+
+    function saveMeta() {
       try {
-        const raw = localStorage.getItem(ROOM_PREFIX + r);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          messages = Array.isArray(parsed.messages) ? parsed.messages : [];
-          notes = Array.isArray(parsed.notes) ? parsed.notes : [];
-          messages.forEach((m) => seen.add(m.id));
-          notes.forEach((n) => seen.add(n.id));
-        } else {
-          messages = [];
-          notes = [];
-        }
+        localStorage.setItem(META_KEY, JSON.stringify({ nick: nickName(), room: roomName() }));
+      } catch (_) {}
+      renderFeed(readRoom());
+    }
+
+    function loadMeta() {
+      try {
+        const raw = localStorage.getItem(META_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d.nick) document.getElementById("nick").value = d.nick;
+        if (d.room) document.getElementById("room").value = d.room;
+      } catch (_) {}
+    }
+
+    function readRoom() {
+      try {
+        return JSON.parse(localStorage.getItem(ROOM_PREFIX + roomName()) || "[]");
       } catch (_) {
-        messages = [];
-        notes = [];
-      }
-      renderChat();
-      renderNotes();
-    }
-
-    function saveRoomData() {
-      const r = cleanRoom();
-      try {
-        localStorage.setItem(ROOM_PREFIX + r, JSON.stringify({
-          messages: messages.slice(-150),
-          notes: notes.slice(-100)
-        }));
-      } catch (_) {}
-    }
-
-    function applyEvent(ev) {
-      if (!ev || !ev.id || seen.has(ev.id)) return;
-      seen.add(ev.id);
-
-      if (ev.type === "msg" && ev.msg) {
-        messages.push(ev.msg);
-        messages.sort((a, b) => a.ts - b.ts);
-        saveRoomData();
-        renderChat();
-      } else if (ev.type === "note" && ev.note) {
-        notes.unshift(ev.note);
-        saveRoomData();
-        renderNotes();
-      } else if (ev.type === "del_note" && ev.targetId) {
-        notes = notes.filter((n) => n.id !== ev.targetId);
-        saveRoomData();
-        renderNotes();
+        return [];
       }
     }
 
-    async function broadcastRemote(ev) {
-      const slug = safeSlug();
-      const tasks = [
-        fetch(`https://ntfy.sh/aether_${slug}`, {
-          method: "POST",
-          body: JSON.stringify(ev)
-        }).then((r) => r.ok),
-        (async () => {
-          const url = `https://kvdb.io/aether_relay_${slug}/data.json`;
-          let cur = { events: [] };
-          const g = await fetch(url, { cache: "no-store" });
-          if (g.ok) {
-            const j = await g.json();
-            if (j && Array.isArray(j.events)) cur.events = j.events;
-          }
-          if (!cur.events.some((x) => x.id === ev.id)) {
-            cur.events.push(ev);
-            cur.events = cur.events.slice(-180);
-            const p = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(cur)
-            });
-            return p.ok;
-          }
-          return true;
-        })()
-      ];
-
-      const results = await Promise.allSettled(tasks);
-      return results.some((r) => r.status === "fulfilled" && r.value === true);
-    }
-
-    async function pullRemote() {
-      const slug = safeSlug();
-      let anyReachable = false;
-
+    function writeRoom(list) {
       try {
-        const r1 = await fetch(`https://ntfy.sh/aether_${slug}/json?poll=1&since=1h`, { cache: "no-store" });
-        if (r1.ok) {
-          anyReachable = true;
-          const txt = await r1.text();
-          for (const line of txt.split("\n")) {
-            const t = line.trim();
-            if (!t) continue;
-            try {
-              const outer = JSON.parse(t);
-              if (outer.event === "message" && outer.message) {
-                applyEvent(JSON.parse(outer.message));
-              }
-            } catch (_) {}
-          }
-        }
+        localStorage.setItem(ROOM_PREFIX + roomName(), JSON.stringify(list.slice(-200)));
       } catch (_) {}
-
-      try {
-        const r2 = await fetch(`https://kvdb.io/aether_relay_${slug}/data.json`, { cache: "no-store" });
-        if (r2.ok) {
-          anyReachable = true;
-          const j = await r2.json();
-          if (j && Array.isArray(j.events)) {
-            j.events.forEach((ev) => applyEvent(ev));
-          }
-        }
-      } catch (_) {}
-
-      return anyReachable;
     }
 
-    function connectNow() {
-      saveState();
-      if (pollId) clearInterval(pollId);
-      if (bc) bc.close();
-
-      loadRoomData();
-      fetchGroqModels(true);
-
-      const r = cleanRoom();
-      bc = new BroadcastChannel(`aether_bc_${r}`);
-      bc.onmessage = (e) => applyEvent(e.data);
-
-      pullRemote().then((ok) => {
-        setLog(
-          "chatLog",
-          ok ? `Oda (${r}) senkronlandı.` : `Yerel/sekme modu aktif (${r}); ağdaki olası kısıtlar kontrol ediliyor.`,
-          ok ? "ok" : ""
-        );
-      });
-
-      pollId = setInterval(pullRemote, 2500);
-    }
-
-    function renderChat() {
-      const box = document.getElementById("chatList");
-      const me = (document.getElementById("nameInp").value || "Yunus").trim();
-      box.innerHTML = "";
-
-      if (!messages.length) {
-        box.innerHTML = `<div class="hint">Henüz mesaj yok kanka. Mesaj yazıp GÖNDER'e bas; Alperen de aynı oda kodunu girerse mesajlarınız görünür.</div>`;
+    function renderFeed(list) {
+      const feed = document.getElementById("feed");
+      const me = nickName();
+      if (!list.length) {
+        feed.innerHTML = `<div class="note">Bu odada henüz mesaj yok kanka.</div>`;
         return;
       }
-
-      messages.forEach((m) => {
-        const div = document.createElement("div");
-        const mine = !m.isAi && m.who === me;
-        div.className = `msg ${m.isAi ? "ai" : mine ? "mine" : ""}`;
-        div.innerHTML = `
-          <div class="msg-head">
-            <span class="msg-who">${esc(m.who)}</span>
-            <span class="msg-time">${esc(m.time || "")}</span>
+      feed.innerHTML = list.map(m => {
+        const isMe = m.who === me;
+        return `
+          <div class="msg ${isMe ? "me" : ""}">
+            <div class="meta">${esc(m.who)} • ${esc(m.time)}</div>
+            <div class="body">${esc(m.text)}</div>
           </div>
-          <div>${esc(m.text)}</div>
         `;
-        box.appendChild(div);
-      });
-      box.scrollTop = box.scrollHeight;
+      }).join("");
+      feed.scrollTop = feed.scrollHeight;
     }
 
-    async function sendChat() {
-      const inp = document.getElementById("chatInp");
-      const btn = document.getElementById("sendBtn");
+    function pushMessage(item, emit = true) {
+      const list = readRoom();
+      if (list.some(x => x.id === item.id)) return;
+      list.push(item);
+      writeRoom(list);
+      renderFeed(list);
+      if (emit && bc) {
+        bc.postMessage({ room: roomName(), item });
+      }
+    }
+
+    function sendMessage() {
+      const inp = document.getElementById("msgInp");
       const text = inp.value.trim();
       if (!text) return;
-
-      const who = (document.getElementById("nameInp").value || "Yunus").trim();
-      const msg = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        ts: Date.now(),
-        time: clockNow(),
-        who,
-        text,
-        isAi: false
+      const item = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        who: nickName(),
+        time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+        text
       };
-
       inp.value = "";
-      btn.disabled = true;
-
-      const ev = { id: `ev_${msg.id}`, type: "msg", msg };
-      applyEvent(ev);
-      if (bc) bc.postMessage(ev);
-
-      const ok = await broadcastRemote(ev);
-      setLog("chatLog", ok ? "Mesaj iletildi." : "Yerelde kaydedildi; ağ/kanal erişimi kapalı olabilir.", ok ? "ok" : "err");
-
-      if (/^@ai\b/i.test(text)) {
-        const q = text.replace(/^@ai\b/i, "").trim() || "Sohbetteki konuyu değerlendir.";
-        setLog("chatLog", "Groq AI yanıtlıyor...");
-        try {
-          const reply = await askGroq(q);
-          const aiMsg = {
-            id: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-            ts: Date.now(),
-            time: clockNow(),
-            who: "Groq AI",
-            text: reply,
-            isAi: true
-          };
-          const aiEv = { id: `ev_${aiMsg.id}`, type: "msg", msg: aiMsg };
-          applyEvent(aiEv);
-          if (bc) bc.postMessage(aiEv);
-          await broadcastRemote(aiEv);
-          setLog("chatLog", "Groq AI yanıtladı.", "ok");
-        } catch (err) {
-          setLog("chatLog", `Groq hatası: ${err.message}`, "err");
-        }
-      }
-
-      btn.disabled = false;
+      pushMessage(item, true);
       inp.focus();
     }
 
-    async function askGroq(prompt, extraSys = "") {
-      const apiKey = document.getElementById("groqInp").value.trim();
-      if (!apiKey) throw new Error("Groq API Key girilmemiş.");
+    function clearRoom() {
+      writeRoom([]);
+      renderFeed([]);
+      if (bc) bc.postMessage({ room: roomName(), clear: true });
+    }
 
-      if (!availableModels.length) {
-        await fetchGroqModels(true);
-      }
-
-      const model = document.getElementById("modelSel").value || availableModels[0] || "llama-3.1-8b-instant";
-      const recent = messages.slice(-8).map((m) => `${m.who}: ${m.text}`).join("\n");
-      const sys = `${SYSTEM_PROMPT}${extraSys ? `\nEk talimat: ${extraSys}` : ""}${recent ? `\nSon sohbet:\n${recent}` : ""}`;
-
-      async function tryModel(mName) {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: mName,
-            temperature: 0.75,
-            max_tokens: 900,
-            messages: [
-              { role: "system", content: sys },
-              { role: "user", content: prompt }
-            ]
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          const err = new Error(data?.error?.message || `HTTP ${res.status}`);
-          err.status = res.status;
-          throw err;
+    function switchRoom() {
+      saveMeta();
+      const r = roomName();
+      document.getElementById("pill").textContent = `Oda: ${r}`;
+      if (bc) bc.close();
+      bc = new BroadcastChannel("aether_nosb_channel_" + r);
+      bc.onmessage = (ev) => {
+        if (!ev.data || ev.data.room !== r) return;
+        if (ev.data.clear) {
+          writeRoom([]);
+          renderFeed([]);
+        } else if (ev.data.item) {
+          pushMessage(ev.data.item, false);
         }
-        const out = data?.choices?.[0]?.message?.content?.trim();
-        if (!out) throw new Error("Boş yanıt döndü.");
-        return out;
-      }
-
-      try {
-        return await tryModel(model);
-      } catch (err) {
-        const fallback = availableModels.find((m) => m !== model);
-        if (fallback && (err.status === 404 || err.status === 400 || /model/i.test(err.message))) {
-          document.getElementById("modelSel").value = fallback;
-          saveState();
-          return await tryModel(fallback);
-        }
-        throw err;
-      }
-    }
-
-    async function runAi() {
-      const inp = document.getElementById("aiInp");
-      const out = document.getElementById("aiOut");
-      const btn = document.getElementById("aiBtn");
-      const q = inp.value.trim();
-      if (!q) return;
-
-      btn.disabled = true;
-      btn.textContent = "YAZIYOR...";
-      out.textContent = "Groq yanıt hazırlıyor...";
-      setLog("aiLog", "");
-
-      try {
-        const ans = await askGroq(q);
-        out.textContent = ans;
-        inp.value = "";
-        setLog("aiLog", "Yanıt hazır.", "ok");
-      } catch (err) {
-        out.textContent = `Hata: ${err.message}`;
-        setLog("aiLog", err.message, "err");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "SOR";
-      }
-    }
-
-    async function runResearch() {
-      const inp = document.getElementById("resInp");
-      const out = document.getElementById("resOut");
-      const btn = document.getElementById("resBtn");
-      const q = inp.value.trim();
-      if (!q) {
-        setLog("resLog", "Araştırılacak bir konu yaz.", "err");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = "ARANIYOR...";
-      out.textContent = `"${q}" araştırılıyor...`;
-      setLog("resLog", "");
-
-      try {
-        const ans = await askGroq(
-          `Şu konuyu detaylı ama anlaşılır açıkla: "${q}"`,
-          "Konuyu başlıklandır: 1) Nedir ve nasıl işler, 2) Önemli noktalar, 3) Zihin/yaşam bağlantısı."
-        );
-        out.textContent = ans;
-        setLog("resLog", "Araştırma tamamlandı.", "ok");
-      } catch (err) {
-        out.textContent = `Hata: ${err.message}`;
-        setLog("resLog", err.message, "err");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "ARAŞTIR";
-      }
-    }
-
-    function openGoogle() {
-      const q = document.getElementById("resInp").value.trim();
-      if (!q) return;
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, "_blank", "noopener");
-    }
-
-    async function copyResToNotes() {
-      const txt = document.getElementById("resOut").textContent.trim();
-      const q = document.getElementById("resInp").value.trim();
-      if (!txt || txt.startsWith("Araştırmak istediğin") || txt.startsWith("Hata:")) return;
-      await pushNote(q ? `[Araştırma: ${q}]\n${txt}` : txt);
-      setLog("resLog", "Notlara eklendi.", "ok");
-    }
-
-    async function pushNote(text) {
-      const who = (document.getElementById("nameInp").value || "Yunus").trim();
-      const note = {
-        id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        ts: Date.now(),
-        time: clockNow(),
-        who,
-        text
       };
-      const ev = { id: `ev_${note.id}`, type: "note", note };
-      applyEvent(ev);
-      if (bc) bc.postMessage(ev);
-      await broadcastRemote(ev);
+      renderFeed(readRoom());
     }
 
-    async function addNote() {
-      const inp = document.getElementById("noteInp");
-      const text = inp.value.trim();
-      if (!text) return;
-      inp.value = "";
-      await pushNote(text);
-      setLog("noteLog", "Not kaydedildi.", "ok");
-    }
-
-    async function deleteNote(id) {
-      const ev = { id: `ev_del_${id}_${Date.now()}`, type: "del_note", targetId: id };
-      applyEvent(ev);
-      if (bc) bc.postMessage(ev);
-      await broadcastRemote(ev);
-    }
-
-    function renderNotes() {
-      const box = document.getElementById("notesBox");
-      box.innerHTML = "";
-      if (!notes.length) {
-        box.innerHTML = `<div class="hint">Henüz not yok.</div>`;
-        return;
+    window.addEventListener("storage", (e) => {
+      if (e.key === ROOM_PREFIX + roomName()) {
+        renderFeed(readRoom());
       }
-      notes.forEach((n) => {
-        const div = document.createElement("div");
-        div.className = "note";
-        div.innerHTML = `
-          <div style="flex:1;">
-            <div>${esc(n.text)}</div>
-            <div class="hint" style="margin-top:3px;">${esc(n.who)} • ${esc(n.time || "")}</div>
-          </div>
-          <button class="btn rose" style="padding:4px 9px; font-size:0.72rem;" type="button" onclick="deleteNote('${n.id}')">Sil</button>
-        `;
-        box.appendChild(div);
-      });
-    }
+    });
 
-    loadState();
-    connectNow();
+    loadMeta();
+    switchRoom();
   </script>
 </body>
 </html>
