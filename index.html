@@ -607,3 +607,563 @@
 
         const reply = aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Cevap üretilemedi.";
         await st_deck_postToRoom("Aether
+<!-- AETHER STUDIO PRO // 10 EKLENTİLİ ALT MODÜL (MEVCUT KODUN ALTINA EKLENİR) -->
+<style>
+  #st_pro_deck {
+    --st-accent: #38bdf8;
+    --st-accent-soft: rgba(56, 189, 248, 0.14);
+    --st-accent-border: rgba(56, 189, 248, 0.38);
+    max-width: 920px;
+    margin: 18px auto 34px auto;
+    background: linear-gradient(160deg, rgba(13, 21, 38, 0.96), rgba(7, 11, 20, 0.98));
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 20px;
+    padding: 18px;
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #st_pro_deck.theme-purple {
+    --st-accent: #c084fc;
+    --st-accent-soft: rgba(192, 132, 252, 0.15);
+    --st-accent-border: rgba(192, 132, 252, 0.4);
+  }
+  #st_pro_deck.theme-emerald {
+    --st-accent: #34d399;
+    --st-accent-soft: rgba(52, 211, 153, 0.15);
+    --st-accent-border: rgba(52, 211, 153, 0.4);
+  }
+  .st_pro_head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  }
+  .st_pro_brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .st_pro_title {
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    color: var(--st-accent);
+  }
+  .st_pro_badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--st-accent-soft);
+    border: 1px solid var(--st-accent-border);
+    color: #f8fafc;
+  }
+  .st_pro_telemetry {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: #cbd5e1;
+  }
+  .st_pro_chip {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .st_pro_row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .st_pro_btn {
+    background: rgba(21, 32, 56, 0.95);
+    color: #e2e8f0;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .st_pro_btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--st-accent);
+    color: #ffffff;
+  }
+  .st_pro_btn:active {
+    transform: translateY(0);
+  }
+  .st_pro_btn.primary {
+    background: var(--st-accent-soft);
+    border-color: var(--st-accent-border);
+    color: var(--st-accent);
+    font-weight: 800;
+  }
+  .st_pro_grid_2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 720px) {
+    .st_pro_grid_2 { grid-template-columns: 1fr; }
+  }
+  .st_pro_card {
+    background: rgba(10, 16, 30, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .st_pro_label {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: 0.2px;
+  }
+  .st_pro_input, .st_pro_textarea {
+    width: 100%;
+    background: rgba(20, 31, 54, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 0.86rem;
+    outline: none;
+  }
+  .st_pro_input:focus, .st_pro_textarea:focus {
+    border-color: var(--st-accent);
+  }
+  .st_pro_textarea {
+    min-height: 92px;
+    resize: vertical;
+    line-height: 1.45;
+  }
+  .st_pro_timer_box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .st_pro_clock_num {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--st-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  #st_pro_status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #86efac;
+    min-height: 18px;
+    word-break: break-word;
+  }
+</style>
+
+<div id="st_pro_deck">
+  <div class="st_pro_head">
+    <div class="st_pro_brand">
+      <span class="st_pro_title">AETHER STUDIO PRO</span>
+      <span class="st_pro_badge">10 MODÜL AKTİF</span>
+    </div>
+    <div class="st_pro_telemetry">
+      <span class="st_pro_chip" id="st_pro_now">--:--:--</span>
+      <span class="st_pro_chip" id="st_pro_session">Oturum: 00:00</span>
+      <span class="st_pro_chip" id="st_pro_msg_count">Mesaj: -</span>
+    </div>
+  </div>
+
+  <!-- Hızlı Mesajlar + Tema + Ses + İndir -->
+  <div class="st_pro_row">
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Hazırım kanka!')">Hazırım</button>
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Geliyorum!')">Geliyorum</button>
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('GG / Helal!')">GG / Helal</button>
+    <button type="button" class="st_pro_btn" id="st_pro_sound_btn" onclick="st_pro_toggleSound()">Ses: Açık</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_cycleTheme()">Tema Değiştir</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_exportTxt()">Sohbeti .TXT İndir</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_copyRoom()">Oda Kopyala</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_clearRoom()">Odayı Temizle</button>
+  </div>
+
+  <div class="st_pro_grid_2">
+    <!-- Sol Kart: DB + Gemini Key + AI Asistan -->
+    <div class="st_pro_card">
+      <span class="st_pro_label">Firebase Realtime DB URL</span>
+      <input id="st_pro_db" class="st_pro_input" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="st_pro_save()" />
+
+      <span class="st_pro_label">Gemini API Key</span>
+      <input id="st_pro_key" class="st_pro_input" type="password" placeholder="AIza..." oninput="st_pro_save()" />
+
+      <span class="st_pro_label">Yapay Zeka Asistanı (Cevabı Odaya Gönderir)</span>
+      <div class="st_pro_row">
+        <input id="st_pro_ai_q" class="st_pro_input" style="flex:1" placeholder="AI'a soru sor veya fikir iste..." onkeydown="if(event.key==='Enter') st_pro_askAi()" />
+        <button type="button" class="st_pro_btn primary" id="st_pro_ai_btn" onclick="st_pro_askAi()">Sor</button>
+      </div>
+    </div>
+
+    <!-- Sağ Kart: Not Defteri + Satır/Punchline + Özel Hızlı Mesaj -->
+    <div class="st_pro_card">
+      <span class="st_pro_label">Stüdyo Not Defteri</span>
+      <textarea id="st_pro_note" class="st_pro_textarea" placeholder="Satır, punchline, taktik veya not yaz..." oninput="st_pro_save()"></textarea>
+
+      <div class="st_pro_row">
+        <button type="button" class="st_pro_btn" onclick="st_pro_noteToRoom()">Notu Odaya At</button>
+        <button type="button" class="st_pro_btn" onclick="st_pro_copyNote()">Notu Kopyala</button>
+        <button type="button" class="st_pro_btn" onclick="st_pro_punchline()">Satır İlhamı Ver</button>
+      </div>
+
+      <span class="st_pro_label">Özel Hızlı Mesaj Kısayolu</span>
+      <div class="st_pro_row">
+        <input id="st_pro_custom_q" class="st_pro_input" style="flex:1" placeholder="Örn: 5 dakikaya giriyorum" />
+        <button type="button" class="st_pro_btn primary" onclick="st_pro_sendCustom()">Hızlı At</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Odak / Kronometre Modülü -->
+  <div class="st_pro_timer_box">
+    <div>
+      <div class="st_pro_label">ODAK / KRONOMETRE SAYACI</div>
+      <div class="st_pro_clock_num" id="st_pro_stopwatch">00:00:00</div>
+    </div>
+    <div class="st_pro_row">
+      <button type="button" class="st_pro_btn primary" onclick="st_pro_swStart()">Başlat</button>
+      <button type="button" class="st_pro_btn" onclick="st_pro_swPause()">Durdur</button>
+      <button type="button" class="st_pro_btn" onclick="st_pro_swReset()">Sıfırla</button>
+    </div>
+  </div>
+
+  <div id="st_pro_status">Aether Studio Pro hazır.</div>
+</div>
+
+<script>
+  (function () {
+    const STORE_KEY = "aether_studio_pro_v1";
+    const THEMES = ["", "theme-purple", "theme-emerald"];
+    const LINES = [
+      "Sessiz kalabalıkta bile kendi ritmini kur, sözün tartısı ağırlığında olsun.",
+      "Haritada yerin belli, pusulan net; gürültüye değil hedefe odaklan.",
+      "Her satırda bir adım, her adımda biraz daha keskin kalem.",
+      "İsim değil duruş kalır; masaya oturduğunda oyun değişir."
+    ];
+
+    let themeIdx = 0;
+    let soundOn = true;
+    let audioCtx = null;
+    let sessionSec = 0;
+    let swSec = 0;
+    let swInterval = null;
+    let lastMsgCount = -1;
+
+    function status(msg) {
+      const el = document.getElementById("st_pro_status");
+      if (el) el.textContent = msg;
+    }
+
+    function getDb() {
+      const v = (document.getElementById("st_pro_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
+      return v.replace(/\/+$/, "");
+    }
+
+    function getKey() {
+      return (document.getElementById("st_pro_key")?.value || "").trim();
+    }
+
+    function getRoom() {
+      const el = document.getElementById("room");
+      const raw = (el?.value || "alperen-yunus-1903").trim();
+      return raw.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
+    }
+
+    function getNick() {
+      const el = document.getElementById("nick");
+      return (el?.value || "Yunus").trim() || "Yunus";
+    }
+
+    function beep() {
+      if (!soundOn) return;
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "triangle";
+        o.frequency.value = 660;
+        g.gain.value = 0.05;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start();
+        o.stop(audioCtx.currentTime + 0.1);
+      } catch (_) {}
+    }
+
+    window.st_pro_save = function () {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          db: getDb(),
+          key: getKey(),
+          note: document.getElementById("st_pro_note")?.value || "",
+          custom: document.getElementById("st_pro_custom_q")?.value || "",
+          themeIdx,
+          soundOn
+        }));
+      } catch (_) {}
+    };
+
+    window.st_pro_send = async function (text) {
+      const clean = (text || "").trim();
+      if (!clean) return;
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            who: getNick(),
+            text: clean,
+            time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+            ts: Date.now()
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        status(`Gönderildi: "${clean}"`);
+      } catch (e) {
+        status(`Gönderim hatası: ${e.message}`);
+      }
+    };
+
+    window.st_pro_sendCustom = async function () {
+      const inp = document.getElementById("st_pro_custom_q");
+      const val = (inp?.value || "").trim();
+      if (!val) {
+        status("Önce özel hızlı mesaj metni yaz.");
+        return;
+      }
+      st_pro_save();
+      await st_pro_send(val);
+    };
+
+    window.st_pro_toggleSound = function () {
+      soundOn = !soundOn;
+      const btn = document.getElementById("st_pro_sound_btn");
+      if (btn) btn.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
+      st_pro_save();
+      status(`Bildirim sesi ${soundOn ? "açıldı" : "kapatıldı"}.`);
+    };
+
+    window.st_pro_cycleTheme = function () {
+      const deck = document.getElementById("st_pro_deck");
+      if (!deck) return;
+      THEMES.forEach(t => t && deck.classList.remove(t));
+      themeIdx = (themeIdx + 1) % THEMES.length;
+      if (THEMES[themeIdx]) deck.classList.add(THEMES[themeIdx]);
+      st_pro_save();
+      const names = ["Cam Mavi", "Neon Mor", "Zümrüt Yeşil"];
+      status(`Tema: ${names[themeIdx]}`);
+    };
+
+    window.st_pro_copyRoom = function () {
+      const r = getRoom();
+      navigator.clipboard?.writeText(r).catch(() => {});
+      status(`Oda kodu kopyalandı: ${r}`);
+    };
+
+    window.st_pro_clearRoom = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        lastMsgCount = 0;
+        status(`"${getRoom()}" odası temizlendi.`);
+      } catch (e) {
+        status(`Temizleme hatası: ${e.message}`);
+      }
+    };
+
+    window.st_pro_noteToRoom = async function () {
+      const txt = (document.getElementById("st_pro_note")?.value || "").trim();
+      if (!txt) {
+        status("Not defteri boş.");
+        return;
+      }
+      await st_pro_send(txt.slice(0, 800));
+    };
+
+    window.st_pro_copyNote = function () {
+      const txt = document.getElementById("st_pro_note")?.value || "";
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      status("Not defteri panoya kopyalandı.");
+    };
+
+    window.st_pro_punchline = function () {
+      const pick = LINES[Math.floor(Math.random() * LINES.length)];
+      const ta = document.getElementById("st_pro_note");
+      if (ta) {
+        ta.value = ta.value ? `${ta.value}\n${pick}` : pick;
+        st_pro_save();
+      }
+      status("Yeni satır ilhamı not defterine eklendi.");
+    };
+
+    window.st_pro_exportTxt = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = data && typeof data === "object"
+          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+          : [];
+        const content = rows.map(r => `[${r.time || "--:--"}] ${r.who || "Anon"}: ${r.text || ""}`).join("\n");
+        const blob = new Blob([content || "Mesaj yok."], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${getRoom()}_sohbet.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        status("Sohbet .TXT dosyası indirildi.");
+      } catch (e) {
+        status(`İndirme hatası: ${e.message}`);
+      }
+    };
+
+    window.st_pro_askAi = async function () {
+      const key = getKey();
+      const inp = document.getElementById("st_pro_ai_q");
+      const btn = document.getElementById("st_pro_ai_btn");
+      const q = (inp?.value || "").trim();
+      if (!q) {
+        status("Önce AI'a soracağın şeyi yaz.");
+        return;
+      }
+      if (!key) {
+        status("AI için Gemini API Key alanına anahtarını gir.");
+        return;
+      }
+      st_pro_save();
+      if (btn) btn.disabled = true;
+      status("AI yanıt hazırlıyor...");
+
+      try {
+        await st_pro_send(`AI Soru: ${q}`);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Kısa, akıcı ve doğal Türkçe cevap ver: ${q}` }] }]
+          })
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j?.error?.message || `HTTP ${r.status}`);
+        const ans = j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Yanıt alınamadı.";
+        await st_pro_send(`AI: ${ans.slice(0, 1000)}`);
+        if (inp) inp.value = "";
+        beep();
+        status("AI cevabı odaya eklendi.");
+      } catch (e) {
+        status(`AI hatası: ${e.message}`);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    function fmtHMS(total) {
+      const h = String(Math.floor(total / 3600)).padStart(2, "0");
+      const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+      const s = String(total % 60).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+
+    function renderClock() {
+      const el = document.getElementById("st_pro_stopwatch");
+      if (el) el.textContent = fmtHMS(swSec);
+    }
+
+    window.st_pro_swStart = function () {
+      if (swInterval) return;
+      swInterval = setInterval(() => {
+        swSec += 1;
+        renderClock();
+      }, 1000);
+      status("Kronometre başlatıldı.");
+    };
+
+    window.st_pro_swPause = function () {
+      if (swInterval) {
+        clearInterval(swInterval);
+        swInterval = null;
+      }
+      status("Kronometre duraklatıldı.");
+    };
+
+    window.st_pro_swReset = function () {
+      st_pro_swPause();
+      swSec = 0;
+      renderClock();
+      status("Kronometre sıfırlandı.");
+    };
+
+    async function refreshStats() {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
+        const data = await res.json();
+        const count = data && typeof data === "object" ? Object.keys(data).length : 0;
+        const badge = document.getElementById("st_pro_msg_count");
+        if (badge) badge.textContent = `Mesaj: ${count}`;
+        if (lastMsgCount !== -1 && count > lastMsgCount) {
+          beep();
+        }
+        lastMsgCount = count;
+      } catch (_) {}
+    }
+
+    setInterval(() => {
+      sessionSec += 1;
+      const nowEl = document.getElementById("st_pro_now");
+      const sesEl = document.getElementById("st_pro_session");
+      if (nowEl) nowEl.textContent = new Date().toLocaleTimeString("tr-TR");
+      if (sesEl) {
+        const mm = String(Math.floor(sessionSec / 60)).padStart(2, "0");
+        const ss = String(sessionSec % 60).padStart(2, "0");
+        sesEl.textContent = `Oturum: ${mm}:${ss}`;
+      }
+    }, 1000);
+
+    setInterval(refreshStats, 3000);
+    refreshStats();
+
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.db && document.getElementById("st_pro_db")) document.getElementById("st_pro_db").value = d.db;
+        if (d.key && document.getElementById("st_pro_key")) document.getElementById("st_pro_key").value = d.key;
+        if (typeof d.note === "string" && document.getElementById("st_pro_note")) document.getElementById("st_pro_note").value = d.note;
+        if (typeof d.custom === "string" && document.getElementById("st_pro_custom_q")) document.getElementById("st_pro_custom_q").value = d.custom;
+        if (typeof d.soundOn === "boolean") {
+          soundOn = d.soundOn;
+          const b = document.getElementById("st_pro_sound_btn");
+          if (b) b.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
+        }
+        if (typeof d.themeIdx === "number" && THEMES[d.themeIdx]) {
+          themeIdx = d.themeIdx;
+          document.getElementById("st_pro_deck")?.classList.add(THEMES[themeIdx]);
+        }
+      }
+    } catch (_) {}
+  })();
+</script>
