@@ -374,8 +374,8 @@
   </div>
 
   <script>
-    const STATE_KEY = "aether_v4_state";
-    const ROOM_PREFIX = "aether_v4_room_";
+    const STATE_KEY = "aether_v5_state";
+    const ROOM_PREFIX = "aether_v5_room_";
 
     let messages = [];
     let notes = [];
@@ -544,42 +544,21 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
 
     async function broadcastRemote(ev) {
       const slug = safeSlug();
-      const tasks = [
-        fetch(`https://ntfy.sh/aether_${slug}`, {
+      try {
+        const r = await fetch(`https://ntfy.sh/aether_${slug}`, {
           method: "POST",
           body: JSON.stringify(ev)
-        }).then((r) => r.ok),
-        (async () => {
-          const url = `https://kvdb.io/aether_relay_${slug}/data.json`;
-          let cur = { events: [] };
-          const g = await fetch(url, { cache: "no-store" });
-          if (g.ok) {
-            const j = await g.json();
-            if (j && Array.isArray(j.events)) cur.events = j.events;
-          }
-          if (!cur.events.some((x) => x.id === ev.id)) {
-            cur.events.push(ev);
-            cur.events = cur.events.slice(-180);
-            const p = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(cur)
-            });
-            return p.ok;
-          }
-          return true;
-        })()
-      ];
-
-      const results = await Promise.allSettled(tasks);
-      return results.some((r) => r.status === "fulfilled" && r.value === true);
+        });
+        return r.ok;
+      } catch (_) {
+        return false;
+      }
     }
 
     async function pullRemote() {
       const slug = safeSlug();
-
       try {
-        const r1 = await fetch(`https://ntfy.sh/aether_${slug}/json?poll=1&since=30m`, { cache: "no-store" });
+        const r1 = await fetch(`https://ntfy.sh/aether_${slug}/json?poll=1&since=1h`, { cache: "no-store" });
         if (r1.ok) {
           const txt = await r1.text();
           for (const line of txt.split("\n")) {
@@ -591,16 +570,6 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
                 applyEvent(JSON.parse(outer.message));
               }
             } catch (_) {}
-          }
-        }
-      } catch (_) {}
-
-      try {
-        const r2 = await fetch(`https://kvdb.io/aether_relay_${slug}/data.json`, { cache: "no-store" });
-        if (r2.ok) {
-          const j = await r2.json();
-          if (j && Array.isArray(j.events)) {
-            j.events.forEach((ev) => applyEvent(ev));
           }
         }
       } catch (_) {}
@@ -712,7 +681,7 @@ Klişe laflar etme; doğrudan konunun özüne in, anlaşılır anlat ve zihni ra
         await fetchGroqModels(true);
       }
 
-      let model = document.getElementById("modelSel").value || availableModels[0] || "llama-3.1-8b-instant";
+      const model = document.getElementById("modelSel").value || availableModels[0] || "llama-3.1-8b-instant";
       const recent = messages.slice(-8).map((m) => `${m.who}: ${m.text}`).join("\n");
       const sys = `${SYSTEM_PROMPT}${extraSys ? `\nEk talimat: ${extraSys}` : ""}${recent ? `\nSon sohbet:\n${recent}` : ""}`;
 
