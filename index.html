@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER STUDIO // Online Ortak Alan & Groq AI</title>
+  <style>
+    :root {
+      --bg: #060911;
+      --surface: #0d1322;
+      --surface-2: #141d33;
+      --line: rgba(148, 163, 184, 0.14);
+      --cyan: #22d3ee;
+      --purple: #a855f7;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.12), transparent 38%),
+        radial-gradient(circle at 88% 8%, rgba(168, 85, 247, 0.13), transparent 42%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px 14px 56px;
+    }
+
+    .wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .brand h1 {
+      font-size: 1.22rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--muted);
+    }
+
+    .pill.online {
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.12);
+    }
+
+    .pill.online .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+    }
+
+    .config-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    @media (max-width: 820px) {
+      .config-card { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 0.83rem;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--cyan);
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn.cyan { background: var(--cyan); color: #04131a; border: none; }
+    .btn.purple { background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #fff; border: none; }
+    .btn.green { background: var(--emerald); color: #041810; border: none; }
+    .btn.rose { background: rgba(244, 63, 94, 0.14); color: #fda4af; border-color: rgba(244, 63, 94, 0.35); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      font-size: 0.96rem;
+      font-weight: 800;
+    }
+
+    .sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .chat-stream {
+      height: 300px;
+      overflow-y: auto;
+      background: #080c17;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .bubble {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.83rem;
+      line-height: 1.5;
+    }
+
+    .bubble.mine {
+      border-color: rgba(34, 211, 238, 0.35);
+      background: rgba(34, 211, 238, 0.08);
+    }
+
+    .bubble.ai {
+      border-color: rgba(168, 85, 247, 0.4);
+      background: rgba(168, 85, 247, 0.09);
+    }
+
+    .bubble-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .bubble-author { color: var(--cyan); }
+    .bubble.ai .bubble-author { color: #e9d5ff; }
+    .bubble-time { color: var(--muted); font-weight: 600; }
+
+    .output-box {
+      background: #080c17;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 14px;
+      font-size: 0.84rem;
+      line-height: 1.62;
+      color: #e2e8f0;
+      white-space: pre-line;
+      min-height: 140px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .note-card {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .feedback {
+      font-size: 0.74rem;
+      color: var(--muted);
+      min-height: 16px;
+    }
+
+    .feedback.ok { color: #6ee7b7; }
+    .feedback.err { color: #fda4af; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1>AETHER STUDIO // ORTAK ALAN & GROQ AI</h1>
+        <p>Firebase gerektirmeden kanal koduyla farklı cihazlardan canlı senkron + Groq AI asistan.</p>
+      </div>
+      <div class="status-row">
+        <span class="pill online" id="syncPill"><span class="dot"></span><span id="syncLabel">KANAL AKTİF</span></span>
+        <span class="pill" id="groqPill">GROQ: BEKLİYOR</span>
+      </div>
+    </header>
+
+    <section class="config-card">
+      <div>
+        <label for="nickInput">Adın / Takma Ad</label>
+        <input type="text" id="nickInput" placeholder="Örn: Kanka / Alperen" onchange="savePrefs()" />
+      </div>
+      <div>
+        <label for="roomInput">Özel Oda Kanalı (Farklı cihazda aynı olsun)</label>
+        <input type="text" id="roomInput" placeholder="Örn: aether-ozel-oda-9921" onchange="restartChannel()" />
+      </div>
+      <div>
+        <label for="groqKeyInput">Groq API Key (gsk_...)</label>
+        <input type="password" id="groqKeyInput" placeholder="gsk_..." onchange="savePrefs(); updateGroqPill();" />
+      </div>
+      <button class="btn cyan" type="button" onclick="restartChannel()">KANALI BAĞLA</button>
+    </section>
+
+    <div class="main-grid">
+      <div class="col">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Canlı Online Sohbet</h2>
+            <span class="sub"><code>@ai</code> ile başlayınca Groq yanıt verir</span>
+          </div>
+          <div class="chat-stream" id="chatStream"></div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="chatInput" placeholder="Mesaj yaz veya '@ai şu düşünceyi açalım...' de" onkeydown="if(event.key==='Enter') sendMessage()" />
+            <button class="btn cyan" type="button" onclick="sendMessage()">GÖNDER</button>
+          </div>
+          <div class="feedback" id="chatStatus"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Groq Yapay Zeka Asistanı</h2>
+            <select id="groqModel" style="width:auto; padding:6px 10px; font-size:0.75rem;" onchange="savePrefs()">
+              <option value="llama-3.3-70b-versatile" selected>llama-3.3-70b-versatile</option>
+              <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Hızlı)</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="aiInput" placeholder="Kilitlendiğin düşünceyi, uzay-zamanı, galaksiyi veya zihni sor..." onkeydown="if(event.key==='Enter') runAiPanel()" />
+            <button class="btn purple" type="button" id="aiBtn" onclick="runAiPanel()">SOR</button>
+          </div>
+          <div class="output-box" id="aiOutput">Groq API anahtarını girip soruyu yaz. Kilitlendiğin düşünceleri çözmek, uzay-zaman/galaksi/zihin üzerine kafa yormak ve odadaki konuşmaları toparlamak için hazır.</div>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Bilgi Araştırma Köşesi</h2>
+            <span class="sub">Groq ile açıklama + Web araması</span>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="researchInput" style="flex:1; min-width:180px;" placeholder="Araştırılacak kavram veya soru..." onkeydown="if(event.key==='Enter') runResearch()" />
+            <button class="btn cyan" type="button" id="resBtn" onclick="runResearch()">ARAŞTIR</button>
+            <button class="btn" type="button" onclick="openWebSearch()">WEB'DE AÇ</button>
+          </div>
+          <div class="output-box" id="researchOutput">Araştırmak istediğin konuyu yaz; Groq API bağlıysa kavramı anlaşılır ve derinlemesine açıklasın, istersen notlara aktar.</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span class="feedback" id="resStatus"></span>
+            <button class="btn green" type="button" onclick="saveResearchToNotes()">NOTLARA EKLE</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Önemli Notlar Köşesi</h2>
+            <span class="sub">Kanal üzerinden senkron & yerel kayıt</span>
+          </div>
+          <textarea id="noteInput" style="min-height:68px;" placeholder="Kilitli düşüncelerden çıkan kilit cümle, karar veya önemli not..."></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span class="feedback" id="noteStatus"></span>
+            <button class="btn green" type="button" onclick="addNote()">NOTU KAYDET</button>
+          </div>
+          <div class="notes-list" id="notesList"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PREFS_KEY = "aether_chan_prefs_v1";
+    const DATA_PREFIX = "aether_chan_data_";
+    const NTFY_BASE = "https://ntfy.sh";
+
+    let pollTimer = null;
+    let bc = null;
+    let seenIds = new Set();
+    let messages = [];
+    let notes = [];
+
+    const SYSTEM_MINDSET = `Sen Türkçe konuşan, doğrudan, samimi ve zihni açan bir yapay zeka asistanısın.
+Kullanıcıyla uzay-zaman, galaksi/evren ölçeği, zihin döngüleri, "dünyanın kancaları" ve kilitlenmiş düşünceler üzerine derin ama ayakları yere basan sohbetler yapıyorsun.
+Yanıtlarında boş klişe veya gereksiz uzatma yapma; konunun özüne in, net bağlantılar kur ve gerekirse zihni rahatlatacak somut bir adım öner.`;
+
+    function nowClock() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function getChannelName() {
+      const raw = (document.getElementById("roomInput").value || "aether-ozel-oda-9921").trim().toLowerCase();
+      return raw.replace(/[^a-z0-9_-]/g, "-") || "aether-ozel-oda-9921";
+    }
+
+    function savePrefs() {
+      const prefs = {
+        nick: document.getElementById("nickInput").value.trim() || "Kanka",
+        room: getChannelName(),
+        groqKey: document.getElementById("groqKeyInput").value.trim(),
+        groqModel: document.getElementById("groqModel").value
+      };
+      try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (_) {}
+      updateGroqPill();
+    }
+
+    function loadPrefs() {
+      try {
+        const raw = localStorage.getItem(PREFS_KEY);
+        if (raw) {
+          const p = JSON.parse(raw);
+          if (p.nick) document.getElementById("nickInput").value = p.nick;
+          if (p.room) document.getElementById("roomInput").value = p.room;
+          if (p.groqKey) document.getElementById("groqKeyInput").value = p.groqKey;
+          if (p.groqModel) document.getElementById("groqModel").value = p.groqModel;
+        }
+      } catch (_) {}
+      if (!document.getElementById("nickInput").value) document.getElementById("nickInput").value = "Kanka";
+      if (!document.getElementById("roomInput").value) document.getElementById("roomInput").value = "aether-ozel-oda-9921";
+      updateGroqPill();
+    }
+
+    function updateGroqPill() {
+      const key = document.getElementById("groqKeyInput").value.trim();
+      const pill = document.getElementById("groqPill");
+      if (key.startsWith("gsk_") && key.length > 15) {
+        pill.textContent = "GROQ: HAZIR";
+        pill.className = "pill online";
+      } else {
+        pill.textContent = "GROQ: KEY GEREKLİ";
+        pill.className = "pill";
+      }
+    }
+
+    function loadLocal() {
+      const key = DATA_PREFIX + getChannelName();
+      seenIds = new Set();
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+          notes = Array.isArray(parsed.notes) ? parsed.notes : [];
+          messages.forEach((m) => seenIds.add(m.id));
+          notes.forEach((n) => seenIds.add(n.id));
+        } else {
+          messages = [];
+          notes = [];
+        }
+      } catch (_) {
+        messages = [];
+        notes = [];
+      }
+      renderMessages();
+      renderNotes();
+    }
+
+    function saveLocal() {
+      const key = DATA_PREFIX + getChannelName();
+      try {
+        localStorage.setItem(key, JSON.stringify({ messages: messages.slice(-150), notes: notes.slice(-100) }));
+      } catch (_) {}
+    }
+
+    async function publishEvent(payload) {
+      const ch = getChannelName();
+      try {
+        await fetch(`${NTFY_BASE}/${encodeURIComponent(ch)}`, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+      } catch (_) {}
+    }
+
+    function applyIncomingEvent(ev) {
+      if (!ev || !ev.id || seenIds.has(ev.id)) return;
+      seenIds.add(ev.id);
+
+      if (ev.kind === "msg") {
+        messages.push(ev.data);
+        messages.sort((a, b) => a.ts - b.ts);
+        saveLocal();
+        renderMessages();
+      } else if (ev.kind === "note") {
+        notes.unshift(ev.data);
+        saveLocal();
+        renderNotes();
+      } else if (ev.kind === "del_note") {
+        notes = notes.filter((n) => n.id !== ev.targetId);
+        saveLocal();
+        renderNotes();
+      }
+    }
+
+    async function pollChannel() {
+      const ch = getChannelName();
+      const lbl = document.getElementById("syncLabel");
+      try {
+        const res = await fetch(`${NTFY_BASE}/${encodeURIComponent(ch)}/json?poll=1&since=10m`);
+        if (!res.ok) throw new Error();
+        const text = await res.text();
+        const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+        for (const line of lines) {
+          try {
+            const outer = JSON.parse(line);
+            if (outer.event === "message" && outer.message) {
+              const inner = JSON.parse(outer.message);
+              applyIncomingEvent(inner);
+            }
+          } catch (_) {}
+        }
+        lbl.textContent = `ONLINE: ${ch}`; } catch (_) { lbl.textContent = `YEREL: ${ch}`;
+      }
+    }
+
+    function restartChannel() {
+      savePrefs();
+      if (pollTimer) clearInterval(pollTimer);
+      if (bc) bc.close();
+
+      loadLocal();
+      const ch = getChannelName();
+      bc = new BroadcastChannel(`bc_${ch}`); bc.onmessage = (e) => applyIncomingEvent(e.data);  document.getElementById("syncLabel").textContent = `ONLINE: ${ch}`;
+      pollChannel();
+      pollTimer = setInterval(pollChannel, 2500);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderMessages() {
+      const box = document.getElementById("chatStream");
+      const me = (document.getElementById("nickInput").value || "Kanka").trim();
+      box.innerHTML = "";
+      if (!messages.length) {
+        box.innerHTML = `<div class="sub">Kanal hazır kanka. Diğer cihazda da
