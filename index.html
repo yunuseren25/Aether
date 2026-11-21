@@ -571,3 +571,754 @@
       sessionSec += 1;
       const nowEl = document.getElementById("st_pro_now");
       const sesEl = document.getElementById("st_pro_session
+<!-- AETHER NEON STUDIO // SİYAH ZEMİN & NEON YAZILI ALT MODÜL -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+
+<style id="aether_neon_studio_css">
+  #aether_neon_wrap {
+    --neon-gold: #ffe600;
+    --neon-gold-glow: 0 0 10px rgba(255, 230, 0, 0.55), 0 0 22px rgba(255, 200, 0, 0.25);
+    --neon-white: #ffffff;
+    --neon-white-glow: 0 0 8px rgba(255, 255, 255, 0.42);
+    --neon-border: rgba(255, 230, 0, 0.45);
+    --surface-1: #040507;
+    --surface-2: #090b10;
+    --surface-3: #0f131c;
+
+    width: 100%;
+    max-width: 960px;
+    margin: 22px auto 40px auto;
+    padding: 20px;
+    background: var(--surface-1);
+    border: 1px solid var(--neon-border);
+    border-radius: 20px;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 230, 0, 0.12);
+    color: var(--neon-white);
+    font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    z-index: 5;
+  }
+
+  #aether_neon_wrap.tone-pure-gold {
+    --neon-gold: #ffd000;
+    --neon-gold-glow: 0 0 12px rgba(255, 208, 0, 0.75), 0 0 28px rgba(255, 180, 0, 0.35);
+    --neon-border: rgba(255, 208, 0, 0.65);
+  }
+
+  #aether_neon_wrap.tone-ice-white {
+    --neon-gold: #fff59d;
+    --neon-gold-glow: 0 0 10px rgba(255, 245, 157, 0.65);
+    --neon-white-glow: 0 0 12px rgba(255, 255, 255, 0.7);
+    --neon-border: rgba(255, 255, 255, 0.45);
+  }
+
+  .an_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 230, 0, 0.22);
+  }
+
+  .an_brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .an_title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--neon-gold);
+    text-shadow: var(--neon-gold-glow);
+  }
+
+  .an_pill {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #000000;
+    color: var(--neon-white);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    text-shadow: var(--neon-white-glow);
+  }
+
+  .an_stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.74rem;
+  }
+
+  .an_stat {
+    background: #000000;
+    color: var(--neon-gold);
+    border: 1px solid rgba(255, 230, 0, 0.35);
+    padding: 5px 10px;
+    border-radius: 999px;
+    text-shadow: 0 0 8px rgba(255, 230, 0, 0.4);
+  }
+
+  .an_row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .an_btn {
+    background: #000000;
+    color: var(--neon-white);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    padding: 8px 13px;
+    border-radius: 10px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-shadow: var(--neon-white-glow);
+    transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .an_btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--neon-gold);
+    color: var(--neon-gold);
+    text-shadow: var(--neon-gold-glow);
+    box-shadow: 0 0 14px rgba(255, 230, 0, 0.22);
+  }
+
+  .an_btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .an_btn.neon-gold {
+    background: #070600;
+    color: var(--neon-gold);
+    border-color: var(--neon-gold);
+    text-shadow: var(--neon-gold-glow);
+  }
+
+  .an_chat_box {
+    background: var(--surface-2);
+    border: 1px solid rgba(255, 230, 0, 0.28);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .an_chat_feed {
+    height: 250px;
+    overflow-y: auto;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .an_msg {
+    background: #0b0e14;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    padding: 8px 12px;
+    max-width: 85%;
+  }
+
+  .an_msg.me {
+    align-self: flex-end;
+    background: #0d0b00;
+    border-color: rgba(255, 230, 0, 0.55);
+  }
+
+  .an_msg_meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--neon-gold);
+    text-shadow: 0 0 8px rgba(255, 230, 0, 0.45);
+    margin-bottom: 3px;
+  }
+
+  .an_msg_text {
+    font-size: 0.9rem;
+    color: var(--neon-white);
+    text-shadow: var(--neon-white-glow);
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  .an_grid_2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 720px) {
+    .an_grid_2 { grid-template-columns: 1fr; }
+  }
+
+  .an_card {
+    background: var(--surface-2);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 14px;
+    padding: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .an_label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neon-gold);
+    text-shadow: 0 0 8px rgba(255, 230, 0, 0.35);
+  }
+
+  .an_input, .an_textarea {
+    width: 100%;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: var(--neon-white);
+    text-shadow: var(--neon-white-glow);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+  }
+
+  .an_input:focus, .an_textarea:focus {
+    border-color: var(--neon-gold);
+    box-shadow: 0 0 12px rgba(255, 230, 0, 0.25);
+  }
+
+  .an_textarea {
+    min-height: 88px;
+    resize: vertical;
+    line-height: 1.45;
+  }
+
+  .an_timer_bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--surface-3);
+    border: 1px solid rgba(255, 230, 0, 0.35);
+    border-radius: 12px;
+    padding: 11px 14px;
+  }
+
+  .an_timer_val {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--neon-gold);
+    text-shadow: var(--neon-gold-glow);
+  }
+
+  #an_status {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.76rem;
+    color: var(--neon-gold);
+    text-shadow: 0 0 8px rgba(255, 230, 0, 0.45);
+    min-height: 18px;
+    word-break: break-word;
+  }
+</style>
+
+<div id="aether_neon_wrap">
+  <div class="an_header">
+    <div class="an_brand">
+      <span class="an_title">AETHER NEON STUDIO</span>
+      <span class="an_pill">DARK // NEON GOLD &amp; WHITE</span>
+    </div>
+    <div class="an_stats">
+      <span class="an_stat" id="an_clock">--:--:--</span>
+      <span class="an_stat" id="an_session">Oturum: 00:00</span>
+      <span class="an_stat" id="an_count">Mesaj: 0</span>
+    </div>
+  </div>
+
+  <!-- 1-6. Hızlı Mesajlar + Ses + Neon Ton + TXT İndir + Oda İşlemleri -->
+  <div class="an_row">
+    <button type="button" class="an_btn neon-gold" onclick="an_send('Hazırım kanka!')">Hazırım</button>
+    <button type="button" class="an_btn neon-gold" onclick="an_send('Geliyorum!')">Geliyorum</button>
+    <button type="button" class="an_btn neon-gold" onclick="an_send('GG / Helal!')">GG / Helal</button>
+    <button type="button" class="an_btn" id="an_sound_btn" onclick="an_toggleSound()">Ses: Açık</button>
+    <button type="button" class="an_btn" onclick="an_cycleTone()">Neon Ton</button>
+    <button type="button" class="an_btn" onclick="an_exportTxt()">.TXT İndir</button>
+    <button type="button" class="an_btn" onclick="an_copyRoom()">Oda Kopyala</button>
+    <button type="button" class="an_btn" onclick="an_clearRoom()">Odayı Temizle</button>
+  </div>
+
+  <!-- STÜDYO CHAT KUTUSU -->
+  <div class="an_chat_box">
+    <span class="an_label">STÜDYO CANLI CHAT KUTUSU</span>
+    <div class="an_chat_feed" id="an_feed"></div>
+    <div class="an_row">
+      <input id="an_chat_input" class="an_input" style="flex:1" placeholder="Stüdyo chat kutusundan mesaj yaz..." onkeydown="if(event.key==='Enter') an_sendFromBox()" />
+      <button type="button" class="an_btn neon-gold" onclick="an_sendFromBox()">Gönder</button>
+    </div>
+  </div>
+
+  <div class="an_grid_2">
+    <!-- 7. DB + Gemini AI Asistanı -->
+    <div class="an_card">
+      <span class="an_label">Firebase Realtime DB URL</span>
+      <input id="an_db" class="an_input" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="an_save()" />
+
+      <span class="an_label">Gemini API Key</span>
+      <input id="an_key" class="an_input" type="password" placeholder="AIza..." oninput="an_save()" />
+
+      <span class="an_label">Yapay Zeka Asistanı (Cevabı Odaya Gönderir)</span>
+      <div class="an_row">
+        <input id="an_ai_input" class="an_input" style="flex:1" placeholder="AI'a soru sor veya fikir iste..." onkeydown="if(event.key==='Enter') an_askAi()" />
+        <button type="button" class="an_btn neon-gold" id="an_ai_btn" onclick="an_askAi()">Sor</button>
+      </div>
+    </div>
+
+    <!-- 8-9. Not Defteri + Satır İlhamı + Özel Hızlı Mesaj -->
+    <div class="an_card">
+      <span class="an_label">Stüdyo Not Defteri</span>
+      <textarea id="an_note" class="an_textarea" placeholder="Satır, punchline, taktik veya not yaz..." oninput="an_save()"></textarea>
+
+      <div class="an_row">
+        <button type="button" class="an_btn neon-gold" onclick="an_noteToRoom()">Notu Odaya At</button>
+        <button type="button" class="an_btn" onclick="an_copyNote()">Notu Kopyala</button>
+        <button type="button" class="an_btn" onclick="an_inspireLine()">Satır İlhamı</button>
+      </div>
+
+      <span class="an_label">Özel Hızlı Mesaj</span>
+      <div class="an_row">
+        <input id="an_custom_input" class="an_input" style="flex:1" placeholder="Örn: 5 dakikaya giriyorum" />
+        <button type="button" class="an_btn neon-gold" onclick="an_sendCustom()">Hızlı At</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Odak / Kronometre Sayacı -->
+  <div class="an_timer_bar">
+    <div>
+      <div class="an_label">ODAK / KRONOMETRE SAYACI</div>
+      <div class="an_timer_val" id="an_sw">00:00:00</div>
+    </div>
+    <div class="an_row">
+      <button type="button" class="an_btn neon-gold" onclick="an_swStart()">Başlat</button>
+      <button type="button" class="an_btn" onclick="an_swStop()">Durdur</button>
+      <button type="button" class="an_btn" onclick="an_swReset()">Sıfırla</button>
+    </div>
+  </div>
+
+  <div id="an_status">Aether Neon Studio hazır.</div>
+</div>
+
+<script id="aether_neon_studio_js">
+  (function () {
+    // Önceki ara/eski stüdyo bloklarını temizle
+    function cleanupOldStudio() {
+      const old1 = document.getElementById("st_deck_wrap");
+      if (old1) old1.remove();
+      const old2 = document.getElementById("st_pro_deck");
+      if (old2) old2.remove();
+    }
+    cleanupOldStudio();
+    setTimeout(cleanupOldStudio, 250);
+
+    const STORE_KEY = "aether_neon_studio_v1";
+    const TONES = ["", "tone-pure-gold", "tone-ice-white"];
+    const LINES = [
+      "Karanlık sahnede altın satır parlar; sesin yüksek değil, yerin sağlam olsun.",
+      "Tek bir hedef, keskin odak; gereksiz her şeyi kenara bırak.",
+      "Her satırda bir adım, her adımda daha net bir imza.",
+      "Masaya oturduğunda tempo senin elinde olur."
+    ];
+
+    let toneIdx = 0;
+    let soundOn = true;
+    let audioCtx = null;
+    let sessionSec = 0;
+    let swSec = 0;
+    let swTimer = null;
+    let prevCount = -1;
+
+    function setStatus(msg) {
+      const el = document.getElementById("an_status");
+      if (el) el.textContent = msg;
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    function getDb() {
+      const val = (document.getElementById("an_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
+      return val.replace(/\/+$/, "");
+    }
+
+    function getKey() {
+      return (document.getElementById("an_key")?.value || "").trim();
+    }
+
+    function getRoom() {
+      const el = document.getElementById("room");
+      const raw = (el?.value || "alperen-yunus-1903").trim();
+      return raw.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
+    }
+
+    function getNick() {
+      const el = document.getElementById("nick");
+      return (el?.value || "Yunus").trim() || "Yunus";
+    }
+
+    function playTone() {
+      if (!soundOn) return;
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = 720;
+        gain.gain.value = 0.05;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (_) {}
+    }
+
+    window.an_save = function () {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          db: getDb(),
+          key: getKey(),
+          note: document.getElementById("an_note")?.value || "",
+          custom: document.getElementById("an_custom_input")?.value || "",
+          toneIdx,
+          soundOn
+        }));
+      } catch (_) {}
+    };
+
+    function renderFeed(rows) {
+      const feed = document.getElementById("an_feed");
+      const countBadge = document.getElementById("an_count");
+      if (countBadge) countBadge.textContent = `Mesaj: ${rows.length}`;
+      if (!feed) return;
+
+      if (!rows.length) {
+        feed.innerHTML = `<div class="an_msg_meta">Bu odada henüz mesaj yok.</div>`;
+        return;
+      }
+
+      const me = getNick();
+      feed.innerHTML = rows.map(r => {
+        const mine = r.who === me;
+        return `
+          <div class="an_msg ${mine ? "me" : ""}">
+            <div class="an_msg_meta">${esc(r.who || "Anon")} • ${esc(r.time || "--:--")}</div>
+            <div class="an_msg_text">${esc(r.text || "")}</div>
+          </div>
+        `;
+      }).join("");
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    async function syncRoom() {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = data && typeof data === "object"
+          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+          : [];
+        if (prevCount !== -1 && rows.length > prevCount) {
+          playTone();
+        }
+        prevCount = rows.length;
+        renderFeed(rows);
+      } catch (_) {}
+    }
+
+    window.an_send = async function (text) {
+      const clean = (text || "").trim();
+      if (!clean) return;
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            who: getNick(),
+            text: clean,
+            time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+            ts: Date.now()
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await syncRoom();
+        setStatus(`Gönderildi: "${clean}"`);
+      } catch (err) {
+        setStatus(`Gönderim hatası: ${err.message}`);
+      }
+    };
+
+    window.an_sendFromBox = async function () {
+      const inp = document.getElementById("an_chat_input");
+      const val = (inp?.value || "").trim();
+      if (!val) return;
+      inp.value = "";
+      await an_send(val);
+      inp.focus();
+    };
+
+    window.an_sendCustom = async function () {
+      const inp = document.getElementById("an_custom_input");
+      const val = (inp?.value || "").trim();
+      if (!val) {
+        setStatus("Önce özel hızlı mesaj yaz.");
+        return;
+      }
+      an_save();
+      await an_send(val);
+    };
+
+    window.an_toggleSound = function () {
+      soundOn = !soundOn;
+      const btn = document.getElementById("an_sound_btn");
+      if (btn) btn.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
+      an_save();
+      setStatus(`Bildirim sesi ${soundOn ? "açıldı" : "kapatıldı"}.`);
+    };
+
+    window.an_cycleTone = function () {
+      const wrap = document.getElementById("aether_neon_wrap");
+      if (!wrap) return;
+      TONES.forEach(t => t && wrap.classList.remove(t));
+      toneIdx = (toneIdx + 1) % TONES.length;
+      if (TONES[toneIdx]) wrap.classList.add(TONES[toneIdx]);
+      an_save();
+      const labels = ["Neon Altın & Beyaz", "Parlak Kehribar Neon", "Buz Beyaz Neon"];
+      setStatus(`Ton: ${labels[toneIdx]}`);
+    };
+
+    window.an_copyRoom = function () {
+      const r = getRoom();
+      navigator.clipboard?.writeText(r).catch(() => {});
+      setStatus(`Oda kodu kopyalandı: ${r}`);
+    };
+
+    window.an_clearRoom = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        prevCount = 0;
+        renderFeed([]);
+        setStatus(`"${getRoom()}" odası temizlendi.`);
+      } catch (err) {
+        setStatus(`Temizleme hatası: ${err.message}`);
+      }
+    };
+
+    window.an_noteToRoom = async function () {
+      const txt = (document.getElementById("an_note")?.value || "").trim();
+      if (!txt) {
+        setStatus("Not defteri boş.");
+        return;
+      }
+      await an_send(txt.slice(0, 800));
+    };
+
+    window.an_copyNote = function () {
+      const txt = document.getElementById("an_note")?.value || "";
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      setStatus("Not defteri panoya kopyalandı.");
+    };
+
+    window.an_inspireLine = function () {
+      const line = LINES[Math.floor(Math.random() * LINES.length)];
+      const ta = document.getElementById("an_note");
+      if (ta) {
+        ta.value = ta.value ? `${ta.value}\n${line}` : line;
+        an_save();
+      }
+      setStatus("Satır ilhamı not defterine eklendi.");
+    };
+
+    window.an_exportTxt = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = data && typeof data === "object"
+          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+          : [];
+        const lines = rows.map(r => `[${r.time || "--:--"}] ${r.who || "Anon"}: ${r.text || ""}`).join("\n");
+        const blob = new Blob([lines || "Mesaj yok."], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${getRoom()}_sohbet.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        setStatus("Sohbet .TXT olarak indirildi.");
+      } catch (err) {
+        setStatus(`İndirme hatası: ${err.message}`);
+      }
+    };
+
+    async function queryGemini(model, apiKey, prompt) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Kısa, net ve doğal Türkçe cevap ver: ${prompt}` }] }]
+        })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json?.error?.message || `HTTP ${res.status}`);
+      }
+      return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    }
+
+    window.an_askAi = async function () {
+      const key = getKey();
+      const inp = document.getElementById("an_ai_input");
+      const btn = document.getElementById("an_ai_btn");
+      const q = (inp?.value || "").trim();
+
+      if (!q) {
+        setStatus("Önce AI'a soracağın şeyi yaz.");
+        return;
+      }
+      if (!key) {
+        setStatus("AI için geçerli bir Gemini API Key (AIza...) gir.");
+        return;
+      }
+
+      an_save();
+      if (btn) btn.disabled = true;
+      setStatus("AI cevap üretiyor...");
+
+      try {
+        await an_send(`AI Soru: ${q}`);
+        const candidates = ["gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
+        let answer = "";
+        let lastError = null;
+
+        for (const model of candidates) {
+          try {
+            answer = await queryGemini(model, key, q);
+            if (answer) break;
+          } catch (err) {
+            lastError = err;
+          }
+        }
+
+        if (!answer) {
+          throw (lastError || new Error("Model yanıt döndürmedi."));
+        }
+
+        await an_send(`Aether AI: ${answer.slice(0, 1000)}`);
+        if (inp) inp.value = "";
+        playTone();
+        setStatus("AI cevabı odaya gönderildi.");
+      } catch (err) {
+        setStatus(`AI hatası: ${err.message}`);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    function fmt(sec) {
+      const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      return `${h}:${m}:${s}`;
+    }
+
+    function drawSw() {
+      const el = document.getElementById("an_sw");
+      if (el) el.textContent = fmt(swSec);
+    }
+
+    window.an_swStart = function () {
+      if (swTimer) return;
+      swTimer = setInterval(() => {
+        swSec += 1;
+        drawSw();
+      }, 1000);
+      setStatus("Kronometre çalışıyor.");
+    };
+
+    window.an_swStop = function () {
+      if (swTimer) {
+        clearInterval(swTimer);
+        swTimer = null;
+      }
+      setStatus("Kronometre durduruldu.");
+    };
+
+    window.an_swReset = function () {
+      an_swStop();
+      swSec = 0;
+      drawSw();
+      setStatus("Kronometre sıfırlandı.");
+    };
+
+    setInterval(() => {
+      sessionSec += 1;
+      const clk = document.getElementById("an_clock");
+      const ses = document.getElementById("an_session");
+      if (clk) clk.textContent = new Date().toLocaleTimeString("tr-TR");
+      if (ses) {
+        const mm = String(Math.floor(sessionSec / 60)).padStart(2, "0");
+        const ss = String(sessionSec % 60).padStart(2, "0");
+        ses.textContent = `Oturum: ${mm}:${ss}`;
+      }
+    }, 1000);
+
+    setInterval(syncRoom, 2500);
+    syncRoom();
+
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.db && document.getElementById("an_db")) document.getElementById("an_db").value = d.db;
+        if (d.key && document.getElementById("an_key")) document.getElementById("an_key").value = d.key;
+        if (typeof d.note === "string" && document.getElementById("an_note")) document.getElementById("an_note").value = d.note;
+        if (typeof d.custom === "string" && document.getElementById("an_custom_input")) document.getElementById("an_custom_input").value = d.custom;
+        if (typeof d.soundOn === "boolean") {
+          soundOn = d.soundOn;
+          const b = document.getElementById("an_sound_btn");
+          if (b) b.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
+        }
+        if (typeof d.toneIdx === "number" && TONES[d.toneIdx]) {
+          toneIdx = d.toneIdx;
+          document.getElementById("aether_neon_wrap")?.classList.add(TONES[toneIdx]);
+        }
+      }
+    } catch (_) {}
+  })();
+</script>
