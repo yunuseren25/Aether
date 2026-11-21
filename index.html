@@ -1,1044 +1,479 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AETHER CHAT // Firebase</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body {
-      background: #060911;
-      color: #f8fafc;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-    }
-    .app {
-      width: 100%;
-      max-width: 760px;
-      background: #0d1424;
-      border: 1px solid #1e293b;
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      height: fit-content;
-    }
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .top h1 {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: #38bdf8;
-    }
-    .pill {
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #162036;
-      color: #94a3b8;
-      border: 1px solid #263554;
-      font-weight: 700;
-    }
-    .pill.live {
-      color: #86efac;
-      border-color: rgba(34, 197, 94, 0.4);
-      background: rgba(34, 197, 94, 0.12);
-    }
-    .bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 8px;
-    }
-    @media (max-width: 600px) {
-      .bar { grid-template-columns: 1fr; }
-    }
-    input {
-      width: 100%;
-      background: #151f36;
-      border: 1px solid #283859;
-      color: #f8fafc;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      outline: none;
-    }
-    input:focus { border-color: #38bdf8; }
-    button {
-      background: #38bdf8;
-      color: #04101a;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 800;
-      font-size: 0.88rem;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .feed {
-      height: 360px;
-      overflow-y: auto;
-      background: #070b14;
-      border: 1px solid #1b263d;
-      border-radius: 12px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .msg {
-      background: #131d33;
-      border: 1px solid #20304f;
-      border-radius: 10px;
-      padding: 9px 12px;
-      max-width: 85%;
-    }
-    .msg.me {
-      align-self: flex-end;
-      background: rgba(56, 189, 248, 0.14);
-      border-color: rgba(56, 189, 248, 0.35);
-    }
-    .meta {
-      font-size: 0.72rem;
-      color: #94a3b8;
-      margin-bottom: 3px;
-      font-weight: 700;
-    }
-    .body {
-      font-size: 0.9rem;
-      line-height: 1.45;
-      word-break: break-word;
-    }
-    .send-row {
-      display: flex;
-      gap: 8px;
-    }
-    .status {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      min-height: 18px;
-      word-break: break-word;
-    }
-    .status.ok { color: #86efac; }
-    .status.err { color: #fda4af; }
-    details {
-      font-size: 0.78rem;
-      color: #94a3b8;
-    }
-    summary { cursor: pointer; user-select: none; margin-bottom: 6px; }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <div class="top">
-      <h1>AETHER CHAT</h1>
-      <span class="pill" id="pill">URL Bekleniyor</span>
-    </div>
-
-    <div class="bar">
-      <input id="nick" value="Kanka" placeholder="Adın" oninput="saveCfg()" />
-      <input id="room" value="alperen-yunus-1903" placeholder="Oda kodu" oninput="connectRoom()" />
-      <button type="button" onclick="connectRoom()">Bağlan</button>
-    </div>
-
-    <details open>
-      <summary>Firebase Realtime Database URL</summary>
-      <input id="dbUrl" placeholder="https://senin-projen-default-rtdb.firebaseio.com" oninput="saveCfg()" />
-    </details>
-
-    <div class="feed" id="feed"></div>
-
-    <div class="send-row">
-      <input id="msgInp" placeholder="Alperen'e mesaj yaz..." onkeydown="if(event.key==='Enter') sendMessage()" />
-      <button type="button" id="sendBtn" onclick="sendMessage()">Gönder</button>
-    </div>
-
-    <div class="status" id="status">Firebase Database URL girip Bağlan'a bas.</div>
-  </div>
-
-  <script>
-    const CFG_KEY = "aether_fb_chat_v1";
-    let timer = null;
-
-    function setStatus(msg, type = "") {
-      const el = document.getElementById("status");
-      el.textContent = msg;
-      el.className = `status ${type}`;
-    }
-
-    function setPill(live, text) {
-      const p = document.getElementById("pill");
-      p.textContent = text;
-      p.className = `pill ${live ? "live" : ""}`;
-    }
-
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, ch => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[ch]));
-    }
-
-    function cleanDbUrl() {
-      const raw = (document.getElementById("dbUrl").value || "").trim();
-      const match = raw.match(/https:\/\/[a-zA-Z0-9.-]+firebaseio\.com|https:\/\/[a-zA-Z0-9.-]+firebasedatabase\.app/);
-      return (match ? match[0] : raw).replace(/\/+$/, "");
-    }
-
-    function cleanRoom() {
-      const r = (document.getElementById("room").value || "alperen-yunus-1903").trim();
-      return r.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
-    }
-
-    function cleanNick() {
-      return (document.getElementById("nick").value || "Kanka").trim() || "Kanka";
-    }
-
-    function saveCfg() {
-      try {
-        localStorage.setItem(CFG_KEY, JSON.stringify({
-          dbUrl: cleanDbUrl(),
-          room: cleanRoom(),
-          nick: cleanNick()
-        }));
-      } catch (_) {}
-    }
-
-    function loadCfg() {
-      try {
-        const raw = localStorage.getItem(CFG_KEY);
-        if (!raw) return;
-        const c = JSON.parse(raw);
-        if (c.dbUrl) document.getElementById("dbUrl").value = c.dbUrl;
-        if (c.room) document.getElementById("room").value = c.room;
-        if (c.nick) document.getElementById("nick").value = c.nick;
-      } catch (_) {}
-    }
-
-    function renderFeed(items) {
-      const feed = document.getElementById("feed");
-      const me = cleanNick();
-      if (!items.length) {
-        feed.innerHTML = `<div class="status">Bu odada henüz mesaj yok kanka. İlk mesajı sen at!</div>`;
-        return;
-      }
-      feed.innerHTML = items.map(m => {
-        const isMe = m.who === me;
-        return `
-          <div class="msg ${isMe ? "me" : ""}">
-            <div class="meta">${esc(m.who)} • ${esc(m.time)}</div>
-            <div class="body">${esc(m.text)}</div>
-          </div>
-        `;
-      }).join("");
-      feed.scrollTop = feed.scrollHeight;
-    }
-
-    async function pullMessages(manual = false) {
-      const base = cleanDbUrl();
-      const room = cleanRoom();
-      if (!base) {
-        setPill(false, "URL Bekleniyor");
-        setStatus("Önce Firebase Realtime Database URL gir.", "err");
-        return;
-      }
-
-      const url = `${base}/rooms/${encodeURIComponent(room)}.json`;
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        const raw = await res.text();
-        let data = null;
-        try {
-          data = JSON.parse(raw);
-        } catch (_) {
-          throw new Error(`Beklenmeyen yanıt (${res.status}): ${raw.slice(0, 70)}`);
-        }
-        if (!res.ok) {
-          throw new Error(data?.error || `HTTP ${res.status}`);
-        }
-        const list = data && typeof data === "object"
-          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
-          : [];
-        renderFeed(list);
-        setPill(true, `Oda: ${room}`);
-        if (manual) {
-          setStatus(`Bağlandı (${new Date().toLocaleTimeString("tr-TR")})`, "ok");
-        }
-      } catch (err) {
-        setPill(false, "Bağlantı Hatası");
-        setStatus(`Okuma hatası: ${err.message}`, "err");
-      }
-    }
-
-    async function sendMessage() {
-      const base = cleanDbUrl();
-      const room = cleanRoom();
-      const inp = document.getElementById("msgInp");
-      const btn = document.getElementById("sendBtn");
-      const text = inp.value.trim();
-      if (!text) return;
-      if (!base) {
-        setStatus("Önce Firebase Database URL gir.", "err");
-        return;
-      }
-
-      saveCfg();
-      btn.disabled = true;
-      setStatus("Gönderiliyor...");
-
-      const payload = {
-        who: cleanNick(),
-        text,
-        time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
-        ts: Date.now()
-      };
-
-      try {
-        const res = await fetch(`${base}/rooms/${encodeURIComponent(room)}.json`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const raw = await res.text();
-        let data = null;
-        try { data = JSON.parse(raw); } catch (_) {}
-        if (!res.ok) {
-          throw new Error(data?.error || `HTTP ${res.status}`);
-        }
-        inp.value = "";
-        await pullMessages(true);
-      } catch (err) {
-        setStatus(`Gönderim hatası: ${err.message}`, "err");
-      } finally {
-        btn.disabled = false;
-        inp.focus();
-      }
-    }
-
-    function connectRoom() {
-      const cleaned = cleanDbUrl();
-      if (cleaned) document.getElementById("dbUrl").value = cleaned;
-      saveCfg();
-      if (timer) clearInterval(timer);
-      pullMessages(true);
-      timer = setInterval(() => pullMessages(false), 2000);
-    }
-
-    loadCfg();
-    if (cleanDbUrl()) {
-      connectRoom();
-    }
-  </script>
-</body>
-</html>
-<!-- AETHER STUDIO + AI EKLENTİ BLOĞU (MEVCUT KODUN ALTINA EKLENİR) -->
+<!-- AETHER STUDIO PRO // ALTIN & BEYAZ SÜRÜM (MEVCUT KODUN ALTINA EKLENİR) -->
 <style>
-  #st_deck_wrap {
-    max-width: 820px;
-    margin: 16px auto 28px auto;
-    background: #0c1322;
-    border: 1px solid #1e2d4a;
-    border-radius: 16px;
-    padding: 16px;
-    color: #f8fafc;
-    font-family: system-ui, -apple-system, sans-serif;
+  #st_pro_deck {
+    --gold: #eab308;
+    --gold-bright: #fde047;
+    --gold-soft: rgba(234, 179, 8, 0.14);
+    --gold-border: rgba(250, 204, 21, 0.36);
+    --white: #ffffff;
+    --white-muted: #e2e8f0;
+    --panel-bg: #0c0f16;
+    --card-bg: #121722;
+    max-width: 960px;
+    margin: 18px auto 36px auto;
+    background: linear-gradient(165deg, #111622 0%, #090c12 100%);
+    border: 1px solid var(--gold-border);
+    border-radius: 18px;
+    padding: 18px;
+    color: var(--white);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
-  .st_deck_top {
+  #st_pro_deck.theme-ivory {
+    --gold: #f59e0b;
+    --gold-bright: #fef08a;
+    --gold-soft: rgba(255, 255, 255, 0.12);
+    --gold-border: rgba(255, 255, 255, 0.38);
+  }
+  #st_pro_deck.theme-royal {
+    --gold: #eab308;
+    --gold-bright: #fde047;
+    --gold-soft: rgba(234, 179, 8, 0.2);
+    --gold-border: rgba(234, 179, 8, 0.55);
+  }
+  .st_pro_head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .st_pro_brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
   }
-  .st_deck_title {
-    font-size: 0.92rem;
-    font-weight: 800;
-    color: #38bdf8;
-    letter-spacing: 0.4px;
+  .st_pro_title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    color: var(--gold-bright);
   }
-  .st_deck_btns {
+  .st_pro_badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-border);
+    color: var(--white);
+  }
+  .st_pro_telemetry {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--white);
   }
-  .st_deck_btn {
-    background: #15223b;
-    color: #e2e8f0;
-    border: 1px solid #283d63;
-    padding: 7px 12px;
-    border-radius: 9px;
+  .st_pro_chip {
+    background: #161c29;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .st_pro_row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .st_pro_btn {
+    background: #161c29;
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    padding: 8px 13px;
+    border-radius: 10px;
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
   }
-  .st_deck_btn:hover {
-    border-color: #38bdf8;
-    color: #ffffff;
+  .st_pro_btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
   }
-  .st_deck_btn.ai_accent {
-    background: rgba(56, 189, 248, 0.16);
-    border-color: rgba(56, 189, 248, 0.45);
-    color: #7dd3fc;
+  .st_pro_btn.primary {
+    background: var(--gold);
+    border-color: var(--gold-bright);
+    color: #0b0e14;
+    font-weight: 800;
   }
-  .st_deck_grid {
+  .st_pro_btn.primary:hover {
+    background: var(--gold-bright);
+    color: #090b10;
+  }
+  .st_pro_grid_2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
   }
-  @media (max-width: 640px) {
-    .st_deck_grid { grid-template-columns: 1fr; }
+  @media (max-width: 720px) {
+    .st_pro_grid_2 { grid-template-columns: 1fr; }
   }
-  .st_deck_label {
-    display: block;
+  .st_pro_card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .st_pro_label {
     font-size: 0.74rem;
-    color: #94a3b8;
-    margin-bottom: 5px;
-    font-weight: 700;
+    font-weight: 800;
+    color: var(--white-muted);
+    letter-spacing: 0.25px;
   }
-  #st_deck_db, #st_deck_gemini_key, #st_deck_ai_prompt, #st_deck_note {
+  .st_pro_input, .st_pro_textarea {
     width: 100%;
-    background: #131e34;
-    border: 1px solid #26385c;
-    color: #f8fafc;
+    background: #0b0f17;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--white);
     border-radius: 10px;
     padding: 9px 11px;
     font-size: 0.86rem;
     outline: none;
   }
-  #st_deck_db:focus, #st_deck_gemini_key:focus, #st_deck_ai_prompt:focus, #st_deck_note:focus {
-    border-color: #38bdf8;
+  .st_pro_input:focus, .st_pro_textarea:focus {
+    border-color: var(--gold-bright);
   }
-  #st_deck_note {
-    min-height: 82px;
+  .st_pro_textarea {
+    min-height: 92px;
     resize: vertical;
     line-height: 1.45;
   }
-  .st_deck_ai_box {
-    background: #080d18;
-    border: 1px solid #1b2a46;
+  .st_pro_timer_box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: #121722;
+    border: 1px solid var(--gold-border);
     border-radius: 12px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    padding: 11px 14px;
   }
-  .st_deck_ai_row {
-    display: flex;
-    gap: 8px;
+  .st_pro_clock_num {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--gold-bright);
+    font-variant-numeric: tabular-nums;
   }
-  #st_deck_info {
-    font-size: 0.76rem;
-    color: #86efac;
-    min-height: 16px;
+  #st_pro_status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gold-bright);
+    min-height: 18px;
     word-break: break-word;
   }
 </style>
 
-<div id="st_deck_wrap">
-  <div class="st_deck_top">
-    <span class="st_deck_title">AETHER STÜDYO MASASI + AI</span>
-    <div class="st_deck_btns">
-      <button type="button" class="st_deck_btn" onclick="st_deck_quickSend('Hazırım kanka!')">Hazırım</button>
-      <button type="button" class="st_deck_btn" onclick="st_deck_quickSend('Geliyorum!')">Geliyorum</button>
-      <button type="button" class="st_deck_btn" onclick="st_deck_copyRoom()">Oda Kodunu Kopyala</button>
-      <button type="button" class="st_deck_btn" onclick="st_deck_clearRoom()">Odayı Temizle</button>
+<div id="st_pro_deck">
+  <div class="st_pro_head">
+    <div class="st_pro_brand">
+      <span class="st_pro_title">AETHER STUDIO // GOLD &amp; WHITE</span>
+      <span class="st_pro_badge">10 EKLENTİ AKTİF</span>
+    </div>
+    <div class="st_pro_telemetry">
+      <span class="st_pro_chip" id="st_pro_now">--:--:--</span>
+      <span class="st_pro_chip" id="st_pro_session">Oturum: 00:00</span>
+      <span class="st_pro_chip" id="st_pro_msg_count">Mesaj: -</span>
     </div>
   </div>
 
-  <div class="st_deck_grid">
+  <!-- 1-6. Hızlı Mesajlar + Ses + Tema + TXT İndir + Oda İşlemleri -->
+  <div class="st_pro_row">
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Hazırım kanka!')">Hazırım</button>
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Geliyorum!')">Geliyorum</button>
+    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('GG / Helal!')">GG / Helal</button>
+    <button type="button" class="st_pro_btn" id="st_pro_sound_btn" onclick="st_pro_toggleSound()">Ses: Açık</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_cycleTheme()">Altın/Beyaz Ton</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_exportTxt()">Sohbeti .TXT İndir</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_copyRoom()">Oda Kopyala</button>
+    <button type="button" class="st_pro_btn" onclick="st_pro_clearRoom()">Odayı Temizle</button>
+  </div>
+
+  <div class="st_pro_grid_2">
+    <!-- 7. AI Asistan Kartı -->
+    <div class="st_pro_card">
+      <span class="st_pro_label">Firebase Realtime DB URL</span>
+      <input id="st_pro_db" class="st_pro_input" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="st_pro_save()" />
+
+      <span class="st_pro_label">Gemini API Key</span>
+      <input id="st_pro_key" class="st_pro_input" type="password" placeholder="AIza..." oninput="st_pro_save()" />
+
+      <span class="st_pro_label">Yapay Zeka Asistanı (Cevabı Odaya Gönderir)</span>
+      <div class="st_pro_row">
+        <input id="st_pro_ai_q" class="st_pro_input" style="flex:1" placeholder="AI'a soru sor veya fikir iste..." onkeydown="if(event.key==='Enter') st_pro_askAi()" />
+        <button type="button" class="st_pro_btn primary" id="st_pro_ai_btn" onclick="st_pro_askAi()">Sor</button>
+      </div>
+    </div>
+
+    <!-- 8-9. Not Defteri + Satır İlhamı + Özel Hızlı Mesaj -->
+    <div class="st_pro_card">
+      <span class="st_pro_label">Stüdyo Not Defteri</span>
+      <textarea id="st_pro_note" class="st_pro_textarea" placeholder="Satır, punchline, taktik veya not yaz..." oninput="st_pro_save()"></textarea>
+
+      <div class="st_pro_row">
+        <button type="button" class="st_pro_btn primary" onclick="st_pro_noteToRoom()">Notu Odaya At</button>
+        <button type="button" class="st_pro_btn" onclick="st_pro_copyNote()">Notu Kopyala</button>
+        <button type="button" class="st_pro_btn" onclick="st_pro_punchline()">Satır İlhamı Ver</button>
+      </div>
+
+      <span class="st_pro_label">Özel Hızlı Mesaj Kısayolu</span>
+      <div class="st_pro_row">
+        <input id="st_pro_custom_q" class="st_pro_input" style="flex:1" placeholder="Örn: 5 dakikaya giriyorum" />
+        <button type="button" class="st_pro_btn primary" onclick="st_pro_sendCustom()">Hızlı At</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Odak / Kronometre Sayacı -->
+  <div class="st_pro_timer_box">
     <div>
-      <label class="st_deck_label" for="st_deck_db">Firebase Realtime DB URL</label>
-      <input id="st_deck_db" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="st_deck_save()" />
+      <div class="st_pro_label">ODAK / KRONOMETRE SAYACI</div>
+      <div class="st_pro_clock_num" id="st_pro_stopwatch">00:00:00</div>
     </div>
-    <div>
-      <label class="st_deck_label" for="st_deck_gemini_key">Gemini API Key (AI Cevabı İçin)</label>
-      <input id="st_deck_gemini_key" type="password" placeholder="AIza..." oninput="st_deck_save()" />
-    </div>
-  </div>
-
-  <div class="st_deck_ai_box">
-    <label class="st_deck_label" for="st_deck_ai_prompt">Yapay Zeka Asistanı (Cevabı Odaya Da Atar)</label>
-    <div class="st_deck_ai_row">
-      <input id="st_deck_ai_prompt" placeholder="AI'a soru sor, satır/punchline iste veya taktik sor..." onkeydown="if(event.key==='Enter') st_deck_askAi()" />
-      <button type="button" class="st_deck_btn ai_accent" id="st_deck_ai_btn" onclick="st_deck_askAi()">AI'a Sor</button>
+    <div class="st_pro_row">
+      <button type="button" class="st_pro_btn primary" onclick="st_pro_swStart()">Başlat</button>
+      <button type="button" class="st_pro_btn" onclick="st_pro_swPause()">Durdur</button>
+      <button type="button" class="st_pro_btn" onclick="st_pro_swReset()">Sıfırla</button>
     </div>
   </div>
 
-  <div>
-    <label class="st_deck_label" for="st_deck_note">Stüdyo Not Defteri (Cihazda Kaydedilir)</label>
-    <textarea id="st_deck_note" placeholder="Not, satır, taktik veya fikir yaz..." oninput="st_deck_save()"></textarea>
-  </div>
-
-  <div id="st_deck_info">Stüdyo masası ve AI modülü hazır.</div>
+  <div id="st_pro_status">Altın &amp; Beyaz stüdyo paneli hazır.</div>
 </div>
 
 <script>
   (function () {
-    const ST_KEY = "aether_bottom_studio_v2";
+    // Ortadaki eski stüdyo bloğunu DOM'dan kaldırır
+    function removeMiddleStudio() {
+      const oldDeck = document.getElementById("st_deck_wrap");
+      if (oldDeck) oldDeck.remove();
 
-    function st_deck_setInfo(msg) {
-      const el = document.getElementById("st_deck_info");
+      const allBlocks = document.querySelectorAll("div, section, aside");
+      allBlocks.forEach(el => {
+        if (el.id === "st_pro_deck" || el.closest("#st_pro_deck")) return;
+        if (el.closest("#feed") || el.closest("#msgs")) return;
+        const txt = (el.textContent || "");
+        if (txt.includes("AETHER STÜDYO MASASI + AI") && el.children.length <= 6) {
+          el.remove();
+        }
+      });
+    }
+
+    removeMiddleStudio();
+    setTimeout(removeMiddleStudio, 300);
+
+    const STORE_KEY = "aether_studio_gold_white_v1";
+    const THEMES = ["", "theme-ivory", "theme-royal"];
+    const LINES = [
+      "Altın kalemle yazılan satır, gürültünün içinde bile kendi ışığını bulur.",
+      "Hedef belli, duruş net; aceleye gerek yok, adım adım zirveye.",
+      "Sözün kısa olsun ama yerini tam bulsun; masada iz bıraksın.",
+      "Odak tek noktada toplandığında hiçbir engel gözükmez."
+    ];
+
+    let themeIdx = 0;
+    let soundOn = true;
+    let audioCtx = null;
+    let sessionSec = 0;
+    let swSec = 0;
+    let swInterval = null;
+    let lastMsgCount = -1;
+
+    function status(msg) {
+      const el = document.getElementById("st_pro_status");
       if (el) el.textContent = msg;
     }
 
-    function st_deck_getDb() {
-      const val = (document.getElementById("st_deck_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
-      return val.replace(/\/+$/, "");
+    function getDb() {
+      const v = (document.getElementById("st_pro_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
+      return v.replace(/\/+$/, "");
     }
 
-    function st_deck_getGeminiKey() {
-      return (document.getElementById("st_deck_gemini_key")?.value || "").trim();
+    function getKey() {
+      return (document.getElementById("st_pro_key")?.value || "").trim();
     }
 
-    function st_deck_getRoom() {
-      const existingRoom = document.getElementById("room");
-      const raw = (existingRoom?.value || "alperen-yunus-1903").trim();
+    function getRoom() {
+      const el = document.getElementById("room");
+      const raw = (el?.value || "alperen-yunus-1903").trim();
       return raw.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
     }
 
-    function st_deck_getNick() {
-      const existingNick = document.getElementById("nick");
-      return (existingNick?.value || "AetherUser").trim() || "AetherUser";
+    function getNick() {
+      const el = document.getElementById("nick");
+      return (el?.value || "Yunus").trim() || "Yunus";
     }
 
-    async function st_deck_postToRoom(who, text) {
-      const db = st_deck_getDb();
-      const room = st_deck_getRoom();
-      const res = await fetch(`${db}/rooms/${encodeURIComponent(room)}.json`, {
+    function beep() {
+      if (!soundOn) return;
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "sine";
+        o.frequency.value = 680;
+        g.gain.value = 0.05;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start();
+        o.stop(audioCtx.currentTime + 0.1);
+      } catch (_) {}
+    }
+
+    window.st_pro_save = function () {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify({
+          db: getDb(),
+          key: getKey(),
+          note: document.getElementById("st_pro_note")?.value || "",
+          custom: document.getElementById("st_pro_custom_q")?.value || "",
+          themeIdx,
+          soundOn
+        }));
+      } catch (_) {}
+    };
+
+    window.st_pro_send = async function (text) {
+      const clean = (text || "").trim();
+      if (!clean) return;
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            who: getNick(),
+            text: clean,
+            time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
+            ts: Date.now()
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        status(`Gönderildi: "${clean}"`);
+      } catch (e) {
+        status(`Gönderim hatası: ${e.message}`);
+      }
+    };
+
+    window.st_pro_sendCustom = async function () {
+      const inp = document.getElementById("st_pro_custom_q");
+      const val = (inp?.value || "").trim();
+      if (!val) {
+        status("Önce özel hızlı mesaj metni yaz.");
+        return;
+      }
+      st_pro_save();
+      await st_pro_send(val);
+    };
+
+    window.st_pro_toggleSound = function () {
+      soundOn = !soundOn;
+      const btn = document.getElementById("st_pro_sound_btn");
+      if (btn) btn.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
+      st_pro_save();
+      status(`Bildirim sesi ${soundOn ? "açıldı" : "kapatıldı"}.`);
+    };
+
+    window.st_pro_cycleTheme = function () {
+      const deck = document.getElementById("st_pro_deck");
+      if (!deck) return;
+      THEMES.forEach(t => t && deck.classList.remove(t));
+      themeIdx = (themeIdx + 1) % THEMES.length;
+      if (THEMES[themeIdx]) deck.classList.add(THEMES[themeIdx]);
+      st_pro_save();
+      const names = ["Klasik Altın & Beyaz", "Fildişi & Kehribar", "Kraliyet Altını"];
+      status(`Ton: ${names[themeIdx]}`);
+    };
+
+    window.st_pro_copyRoom = function () {
+      const r = getRoom();
+      navigator.clipboard?.writeText(r).catch(() => {});
+      status(`Oda kodu kopyalandı: ${r}`);
+    };
+
+    window.st_pro_clearRoom = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        lastMsgCount = 0;
+        status(`"${getRoom()}" odası temizlendi.`);
+      } catch (e) {
+        status(`Temizleme hatası: ${e.message}`);
+      }
+    };
+
+    window.st_pro_noteToRoom = async function () {
+      const txt = (document.getElementById("st_pro_note")?.value || "").trim();
+      if (!txt) {
+        status("Not defteri boş.");
+        return;
+      }
+      await st_pro_send(txt.slice(0, 800));
+    };
+
+    window.st_pro_copyNote = function () {
+      const txt = document.getElementById("st_pro_note")?.value || "";
+      navigator.clipboard?.writeText(txt).catch(() => {});
+      status("Not defteri panoya kopyalandı.");
+    };
+
+    window.st_pro_punchline = function () {
+      const pick = LINES[Math.floor(Math.random() * LINES.length)];
+      const ta = document.getElementById("st_pro_note");
+      if (ta) {
+        ta.value = ta.value ? `${ta.value}\n${pick}` : pick;
+        st_pro_save();
+      }
+      status("Yeni satır ilhamı not defterine eklendi.");
+    };
+
+    window.st_pro_exportTxt = async function () {
+      try {
+        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = data && typeof data === "object"
+          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
+          : [];
+        const content = rows.map(r => `[${r.time || "--:--"}] ${r.who || "Anon"}: ${r.text || ""}`).join("\n");
+        const blob = new Blob([content || "Mesaj yok."], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${getRoom()}_sohbet.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        status("Sohbet .TXT dosyası indirildi.");
+      } catch (e) {
+        status(`İndirme hatası: ${e.message}`);
+      }
+    };
+
+    async function callGeminiModel(modelName, key, prompt) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(key)}`;
+      const r = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          who,
-          text,
-          time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
-          ts: Date.now()
+          contents: [{ parts: [{ text: `Kısa, akıcı ve doğal Türkçe cevap ver: ${prompt}` }] }]
         })
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const j = await r.json();
+      if (!r.ok) {
+        throw new Error(j?.error?.message || `HTTP ${r.status}`);
+      }
+      return j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
     }
-
-    window.st_deck_save = function () {
-      try {
-        localStorage.setItem(ST_KEY, JSON.stringify({
-          db: st_deck_getDb(),
-          geminiKey: st_deck_getGeminiKey(),
-          note: document.getElementById("st_deck_note")?.value || ""
-        }));
-      } catch (_) {}
-    };
-
-    window.st_deck_copyRoom = function () {
-      const room = st_deck_getRoom();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(room).catch(() => {});
-      }
-      st_deck_setInfo(`Oda kodu kopyalandı: ${room}`);
-    };
-
-    window.st_deck_quickSend = async function (text) {
-      try {
-        await st_deck_postToRoom(st_deck_getNick(), text);
-        st_deck_setInfo(`Hızlı mesaj gönderildi: "${text}"`);
-      } catch (err) {
-        st_deck_setInfo(`Gönderim hatası: ${err.message}`);
-      }
-    };
-
-    window.st_deck_clearRoom = async function () {
-      const db = st_deck_getDb();
-      const room = st_deck_getRoom();
-      try {
-        const res = await fetch(`${db}/rooms/${encodeURIComponent(room)}.json`, { method: "DELETE" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        st_deck_setInfo(`"${room}" odası temizlendi.`);
-      } catch (err) {
-        st_deck_setInfo(`Temizleme hatası: ${err.message}`);
-      }
-    };
-
-    window.st_deck_askAi = async function () {
-      const key = st_deck_getGeminiKey();
-      const inp = document.getElementById("st_deck_ai_prompt");
-      const btn = document.getElementById("st_deck_ai_btn");
-      const prompt = (inp?.value || "").trim();
-
-      if (!prompt) {
-        st_deck_setInfo("Önce AI'a soracağın şeyi yaz kanka.");
-        return;
-      }
-      if (!key) {
-        st_deck_setInfo("AI cevabı için Gemini API Key alanına anahtarını girmen lazım.");
-        return;
-      }
-
-      st_deck_save();
-      if (btn) btn.disabled = true;
-      st_deck_setInfo("AI düşünüyor ve odaya yazıyor...");
-
-      try {
-        await st_deck_postToRoom(`${st_deck_getNick()} (AI Soru)`, prompt);
-
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
-        const aiRes = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Kısa, net ve samimi Türkçe cevap ver (sohbet odasına uygun): ${prompt}`
-              }]
-            }]
-          })
-        });
-
-        const aiData = await aiRes.json();
-        if (!aiRes.ok) {
-          throw new Error(aiData?.error?.message || `Gemini HTTP ${aiRes.status}`);
-        }
-
-        const reply = aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Cevap üretilemedi.";
-        await st_deck_postToRoom("Aether
-<!-- AETHER STUDIO PRO // 10 EKLENTİLİ ALT MODÜL (MEVCUT KODUN ALTINA EKLENİR) -->
-<style>
-  #st_pro_deck {
-    --st-accent: #38bdf8;
-    --st-accent-soft: rgba(56, 189, 248, 0.14);
-    --st-accent-border: rgba(56, 189, 248, 0.38);
-    max-width: 920px;
-    margin: 18px auto 34px auto;
-    background: linear-gradient(160deg, rgba(13, 21, 38, 0.96), rgba(7, 11, 20, 0.98));
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    border-radius: 20px;
-    padding: 18px;
-    color: #f8fafc;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  #st_pro_deck.theme-purple {
-    --st-accent: #c084fc;
-    --st-accent-soft: rgba(192, 132, 252, 0.15);
-    --st-accent-border: rgba(192, 132, 252, 0.4);
-  }
-  #st_pro_deck.theme-emerald {
-    --st-accent: #34d399;
-    --st-accent-soft: rgba(52, 211, 153, 0.15);
-    --st-accent-border: rgba(52, 211, 153, 0.4);
-  }
-  .st_pro_head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  }
-  .st_pro_brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .st_pro_title {
-    font-size: 1rem;
-    font-weight: 900;
-    letter-spacing: 0.5px;
-    color: var(--st-accent);
-  }
-  .st_pro_badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: var(--st-accent-soft);
-    border: 1px solid var(--st-accent-border);
-    color: #f8fafc;
-  }
-  .st_pro_telemetry {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 0.75rem;
-    color: #cbd5e1;
-  }
-  .st_pro_chip {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-weight: 700;
-  }
-  .st_pro_row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .st_pro_btn {
-    background: rgba(21, 32, 56, 0.95);
-    color: #e2e8f0;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
-  }
-  .st_pro_btn:hover {
-    transform: translateY(-1px);
-    border-color: var(--st-accent);
-    color: #ffffff;
-  }
-  .st_pro_btn:active {
-    transform: translateY(0);
-  }
-  .st_pro_btn.primary {
-    background: var(--st-accent-soft);
-    border-color: var(--st-accent-border);
-    color: var(--st-accent);
-    font-weight: 800;
-  }
-  .st_pro_grid_2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  @media (max-width: 720px) {
-    .st_pro_grid_2 { grid-template-columns: 1fr; }
-  }
-  .st_pro_card {
-    background: rgba(10, 16, 30, 0.85);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    border-radius: 14px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .st_pro_label {
-    font-size: 0.74rem;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 0.2px;
-  }
-  .st_pro_input, .st_pro_textarea {
-    width: 100%;
-    background: rgba(20, 31, 54, 0.92);
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    color: #f8fafc;
-    border-radius: 10px;
-    padding: 9px 11px;
-    font-size: 0.86rem;
-    outline: none;
-  }
-  .st_pro_input:focus, .st_pro_textarea:focus {
-    border-color: var(--st-accent);
-  }
-  .st_pro_textarea {
-    min-height: 92px;
-    resize: vertical;
-    line-height: 1.45;
-  }
-  .st_pro_timer_box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    border-radius: 12px;
-    padding: 10px 12px;
-  }
-  .st_pro_clock_num {
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: var(--st-accent);
-    font-variant-numeric: tabular-nums;
-  }
-  #st_pro_status {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #86efac;
-    min-height: 18px;
-    word-break: break-word;
-  }
-</style>
-
-<div id="st_pro_deck">
-  <div class="st_pro_head">
-    <div class="st_pro_brand">
-      <span class="st_pro_title">AETHER STUDIO PRO</span>
-      <span class="st_pro_badge">10 MODÜL AKTİF</span>
-    </div>
-    <div class="st_pro_telemetry">
-      <span class="st_pro_chip" id="st_pro_now">--:--:--</span>
-      <span class="st_pro_chip" id="st_pro_session">Oturum: 00:00</span>
-      <span class="st_pro_chip" id="st_pro_msg_count">Mesaj: -</span>
-    </div>
-  </div>
-
-  <!-- Hızlı Mesajlar + Tema + Ses + İndir -->
-  <div class="st_pro_row">
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Hazırım kanka!')">Hazırım</button>
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Geliyorum!')">Geliyorum</button>
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('GG / Helal!')">GG / Helal</button>
-    <button type="button" class="st_pro_btn" id="st_pro_sound_btn" onclick="st_pro_toggleSound()">Ses: Açık</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_cycleTheme()">Tema Değiştir</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_exportTxt()">Sohbeti .TXT İndir</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_copyRoom()">Oda Kopyala</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_clearRoom()">Odayı Temizle</button>
-  </div>
-
-  <div class="st_pro_grid_2">
-    <!-- Sol Kart: DB + Gemini Key + AI Asistan -->
-    <div class="st_pro_card">
-      <span class="st_pro_label">Firebase Realtime DB URL</span>
-      <input id="st_pro_db" class="st_pro_input" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="st_pro_save()" />
-
-      <span class="st_pro_label">Gemini API Key</span>
-      <input id="st_pro_key" class="st_pro_input" type="password" placeholder="AIza..." oninput="st_pro_save()" />
-
-      <span class="st_pro_label">Yapay Zeka Asistanı (Cevabı Odaya Gönderir)</span>
-      <div class="st_pro_row">
-        <input id="st_pro_ai_q" class="st_pro_input" style="flex:1" placeholder="AI'a soru sor veya fikir iste..." onkeydown="if(event.key==='Enter') st_pro_askAi()" />
-        <button type="button" class="st_pro_btn primary" id="st_pro_ai_btn" onclick="st_pro_askAi()">Sor</button>
-      </div>
-    </div>
-
-    <!-- Sağ Kart: Not Defteri + Satır/Punchline + Özel Hızlı Mesaj -->
-    <div class="st_pro_card">
-      <span class="st_pro_label">Stüdyo Not Defteri</span>
-      <textarea id="st_pro_note" class="st_pro_textarea" placeholder="Satır, punchline, taktik veya not yaz..." oninput="st_pro_save()"></textarea>
-
-      <div class="st_pro_row">
-        <button type="button" class="st_pro_btn" onclick="st_pro_noteToRoom()">Notu Odaya At</button>
-        <button type="button" class="st_pro_btn" onclick="st_pro_copyNote()">Notu Kopyala</button>
-        <button type="button" class="st_pro_btn" onclick="st_pro_punchline()">Satır İlhamı Ver</button>
-      </div>
-
-      <span class="st_pro_label">Özel Hızlı Mesaj Kısayolu</span>
-      <div class="st_pro_row">
-        <input id="st_pro_custom_q" class="st_pro_input" style="flex:1" placeholder="Örn: 5 dakikaya giriyorum" />
-        <button type="button" class="st_pro_btn primary" onclick="st_pro_sendCustom()">Hızlı At</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Odak / Kronometre Modülü -->
-  <div class="st_pro_timer_box">
-    <div>
-      <div class="st_pro_label">ODAK / KRONOMETRE SAYACI</div>
-      <div class="st_pro_clock_num" id="st_pro_stopwatch">00:00:00</div>
-    </div>
-    <div class="st_pro_row">
-      <button type="button" class="st_pro_btn primary" onclick="st_pro_swStart()">Başlat</button>
-      <button type="button" class="st_pro_btn" onclick="st_pro_swPause()">Durdur</button>
-      <button type="button" class="st_pro_btn" onclick="st_pro_swReset()">Sıfırla</button>
-    </div>
-  </div>
-
-  <div id="st_pro_status">Aether Studio Pro hazır.</div>
-</div>
-
-<script>
-  (function () {
-    const STORE_KEY = "aether_studio_pro_v1";
-    const THEMES = ["", "theme-purple", "theme-emerald"];
-    const LINES = [
-      "Sessiz kalabalıkta bile kendi ritmini kur, sözün tartısı ağırlığında olsun.",
-      "Haritada yerin belli, pusulan net; gürültüye değil hedefe odaklan.",
-      "Her satırda bir adım, her adımda biraz daha keskin kalem.",
-      "İsim değil duruş kalır; masaya oturduğunda oyun değişir."
-    ];
-
-    let themeIdx = 0;
-    let soundOn = true;
-    let audioCtx = null;
-    let sessionSec = 0;
-    let swSec = 0;
-    let swInterval = null;
-    let lastMsgCount = -1;
-
-    function status(msg) {
-      const el = document.getElementById("st_pro_status");
-      if (el) el.textContent = msg;
-    }
-
-    function getDb() {
-      const v = (document.getElementById("st_pro_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
-      return v.replace(/\/+$/, "");
-    }
-
-    function getKey() {
-      return (document.getElementById("st_pro_key")?.value || "").trim();
-    }
-
-    function getRoom() {
-      const el = document.getElementById("room");
-      const raw = (el?.value || "alperen-yunus-1903").trim();
-      return raw.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
-    }
-
-    function getNick() {
-      const el = document.getElementById("nick");
-      return (el?.value || "Yunus").trim() || "Yunus";
-    }
-
-    function beep() {
-      if (!soundOn) return;
-      try {
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = "triangle";
-        o.frequency.value = 660;
-        g.gain.value = 0.05;
-        o.connect(g);
-        g.connect(audioCtx.destination);
-        o.start();
-        o.stop(audioCtx.currentTime + 0.1);
-      } catch (_) {}
-    }
-
-    window.st_pro_save = function () {
-      try {
-        localStorage.setItem(STORE_KEY, JSON.stringify({
-          db: getDb(),
-          key: getKey(),
-          note: document.getElementById("st_pro_note")?.value || "",
-          custom: document.getElementById("st_pro_custom_q")?.value || "",
-          themeIdx,
-          soundOn
-        }));
-      } catch (_) {}
-    };
-
-    window.st_pro_send = async function (text) {
-      const clean = (text || "").trim();
-      if (!clean) return;
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            who: getNick(),
-            text: clean,
-            time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
-            ts: Date.now()
-          })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        status(`Gönderildi: "${clean}"`);
-      } catch (e) {
-        status(`Gönderim hatası: ${e.message}`);
-      }
-    };
-
-    window.st_pro_sendCustom = async function () {
-      const inp = document.getElementById("st_pro_custom_q");
-      const val = (inp?.value || "").trim();
-      if (!val) {
-        status("Önce özel hızlı mesaj metni yaz.");
-        return;
-      }
-      st_pro_save();
-      await st_pro_send(val);
-    };
-
-    window.st_pro_toggleSound = function () {
-      soundOn = !soundOn;
-      const btn = document.getElementById("st_pro_sound_btn");
-      if (btn) btn.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
-      st_pro_save();
-      status(`Bildirim sesi ${soundOn ? "açıldı" : "kapatıldı"}.`);
-    };
-
-    window.st_pro_cycleTheme = function () {
-      const deck = document.getElementById("st_pro_deck");
-      if (!deck) return;
-      THEMES.forEach(t => t && deck.classList.remove(t));
-      themeIdx = (themeIdx + 1) % THEMES.length;
-      if (THEMES[themeIdx]) deck.classList.add(THEMES[themeIdx]);
-      st_pro_save();
-      const names = ["Cam Mavi", "Neon Mor", "Zümrüt Yeşil"];
-      status(`Tema: ${names[themeIdx]}`);
-    };
-
-    window.st_pro_copyRoom = function () {
-      const r = getRoom();
-      navigator.clipboard?.writeText(r).catch(() => {});
-      status(`Oda kodu kopyalandı: ${r}`);
-    };
-
-    window.st_pro_clearRoom = async function () {
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { method: "DELETE" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        lastMsgCount = 0;
-        status(`"${getRoom()}" odası temizlendi.`);
-      } catch (e) {
-        status(`Temizleme hatası: ${e.message}`);
-      }
-    };
-
-    window.st_pro_noteToRoom = async function () {
-      const txt = (document.getElementById("st_pro_note")?.value || "").trim();
-      if (!txt) {
-        status("Not defteri boş.");
-        return;
-      }
-      await st_pro_send(txt.slice(0, 800));
-    };
-
-    window.st_pro_copyNote = function () {
-      const txt = document.getElementById("st_pro_note")?.value || "";
-      navigator.clipboard?.writeText(txt).catch(() => {});
-      status("Not defteri panoya kopyalandı.");
-    };
-
-    window.st_pro_punchline = function () {
-      const pick = LINES[Math.floor(Math.random() * LINES.length)];
-      const ta = document.getElementById("st_pro_note");
-      if (ta) {
-        ta.value = ta.value ? `${ta.value}\n${pick}` : pick;
-        st_pro_save();
-      }
-      status("Yeni satır ilhamı not defterine eklendi.");
-    };
-
-    window.st_pro_exportTxt = async function () {
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
-        const data = await res.json();
-        const rows = data && typeof data === "object"
-          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
-          : [];
-        const content = rows.map(r => `[${r.time || "--:--"}] ${r.who || "Anon"}: ${r.text || ""}`).join("\n");
-        const blob = new Blob([content || "Mesaj yok."], { type: "text/plain;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${getRoom()}_sohbet.txt`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        status("Sohbet .TXT dosyası indirildi.");
-      } catch (e) {
-        status(`İndirme hatası: ${e.message}`);
-      }
-    };
 
     window.st_pro_askAi = async function () {
       const key = getKey();
@@ -1059,17 +494,18 @@
 
       try {
         await st_pro_send(`AI Soru: ${q}`);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
-        const r = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Kısa, akıcı ve doğal Türkçe cevap ver: ${q}` }] }]
-          })
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j?.error?.message || `HTTP ${r.status}`);
-        const ans = j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Yanıt alınamadı.";
+        let ans = "";
+        const models = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite"];
+        let lastErr = null;
+        for (const m of models) {
+          try {
+            ans = await callGeminiModel(m, key, q);
+            if (ans) break;
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        if (!ans) throw (lastErr || new Error("Yanıt alınamadı."));
         await st_pro_send(`AI: ${ans.slice(0, 1000)}`);
         if (inp) inp.value = "";
         beep();
@@ -1134,596 +570,4 @@
     setInterval(() => {
       sessionSec += 1;
       const nowEl = document.getElementById("st_pro_now");
-      const sesEl = document.getElementById("st_pro_session");
-      if (nowEl) nowEl.textContent = new Date().toLocaleTimeString("tr-TR");
-      if (sesEl) {
-        const mm = String(Math.floor(sessionSec / 60)).padStart(2, "0");
-        const ss = String(sessionSec % 60).padStart(2, "0");
-        sesEl.textContent = `Oturum: ${mm}:${ss}`;
-      }
-    }, 1000);
-
-    setInterval(refreshStats, 3000);
-    refreshStats();
-
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        const d = JSON.parse(raw);
-        if (d.db && document.getElementById("st_pro_db")) document.getElementById("st_pro_db").value = d.db;
-        if (d.key && document.getElementById("st_pro_key")) document.getElementById("st_pro_key").value = d.key;
-        if (typeof d.note === "string" && document.getElementById("st_pro_note")) document.getElementById("st_pro_note").value = d.note;
-        if (typeof d.custom === "string" && document.getElementById("st_pro_custom_q")) document.getElementById("st_pro_custom_q").value = d.custom;
-        if (typeof d.soundOn === "boolean") {
-          soundOn = d.soundOn;
-          const b = document.getElementById("st_pro_sound_btn");
-          if (b) b.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
-        }
-        if (typeof d.themeIdx === "number" && THEMES[d.themeIdx]) {
-          themeIdx = d.themeIdx;
-          document.getElementById("st_pro_deck")?.classList.add(THEMES[themeIdx]);
-        }
-      }
-    } catch (_) {}
-  })();
-</script>
-<!-- AETHER STUDIO PRO // 10 EKLENTİLİ ALT MODÜL (MEVCUT KODUN ALTINA EKLENİR) -->
-<style>
-  #st_pro_deck {
-    --st-accent: #38bdf8;
-    --st-accent-soft: rgba(56, 189, 248, 0.14);
-    --st-accent-border: rgba(56, 189, 248, 0.38);
-    max-width: 920px;
-    margin: 18px auto 34px auto;
-    background: linear-gradient(160deg, rgba(13, 21, 38, 0.96), rgba(7, 11, 20, 0.98));
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    border-radius: 20px;
-    padding: 18px;
-    color: #f8fafc;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  #st_pro_deck.theme-purple {
-    --st-accent: #c084fc;
-    --st-accent-soft: rgba(192, 132, 252, 0.15);
-    --st-accent-border: rgba(192, 132, 252, 0.4);
-  }
-  #st_pro_deck.theme-emerald {
-    --st-accent: #34d399;
-    --st-accent-soft: rgba(52, 211, 153, 0.15);
-    --st-accent-border: rgba(52, 211, 153, 0.4);
-  }
-  .st_pro_head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  }
-  .st_pro_brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .st_pro_title {
-    font-size: 1rem;
-    font-weight: 900;
-    letter-spacing: 0.5px;
-    color: var(--st-accent);
-  }
-  .st_pro_badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: var(--st-accent-soft);
-    border: 1px solid var(--st-accent-border);
-    color: #f8fafc;
-  }
-  .st_pro_telemetry {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 0.75rem;
-    color: #cbd5e1;
-  }
-  .st_pro_chip {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-weight: 700;
-  }
-  .st_pro_row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .st_pro_btn {
-    background: rgba(21, 32, 56, 0.95);
-    color: #e2e8f0;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
-  }
-  .st_pro_btn:hover {
-    transform: translateY(-1px);
-    border-color: var(--st-accent);
-    color: #ffffff;
-  }
-  .st_pro_btn:active {
-    transform: translateY(0);
-  }
-  .st_pro_btn.primary {
-    background: var(--st-accent-soft);
-    border-color: var(--st-accent-border);
-    color: var(--st-accent);
-    font-weight: 800;
-  }
-  .st_pro_grid_2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  @media (max-width: 720px) {
-    .st_pro_grid_2 { grid-template-columns: 1fr; }
-  }
-  .st_pro_card {
-    background: rgba(10, 16, 30, 0.85);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    border-radius: 14px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .st_pro_label {
-    font-size: 0.74rem;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 0.2px;
-  }
-  .st_pro_input, .st_pro_textarea {
-    width: 100%;
-    background: rgba(20, 31, 54, 0.92);
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    color: #f8fafc;
-    border-radius: 10px;
-    padding: 9px 11px;
-    font-size: 0.86rem;
-    outline: none;
-  }
-  .st_pro_input:focus, .st_pro_textarea:focus {
-    border-color: var(--st-accent);
-  }
-  .st_pro_textarea {
-    min-height: 92px;
-    resize: vertical;
-    line-height: 1.45;
-  }
-  .st_pro_timer_box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    border-radius: 12px;
-    padding: 10px 12px;
-  }
-  .st_pro_clock_num {
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: var(--st-accent);
-    font-variant-numeric: tabular-nums;
-  }
-  #st_pro_status {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #86efac;
-    min-height: 18px;
-    word-break: break-word;
-  }
-</style>
-
-<div id="st_pro_deck">
-  <div class="st_pro_head">
-    <div class="st_pro_brand">
-      <span class="st_pro_title">AETHER STUDIO PRO</span>
-      <span class="st_pro_badge">10 MODÜL AKTİF</span>
-    </div>
-    <div class="st_pro_telemetry">
-      <span class="st_pro_chip" id="st_pro_now">--:--:--</span>
-      <span class="st_pro_chip" id="st_pro_session">Oturum: 00:00</span>
-      <span class="st_pro_chip" id="st_pro_msg_count">Mesaj: -</span>
-    </div>
-  </div>
-
-  <!-- Hızlı Mesajlar + Tema + Ses + İndir -->
-  <div class="st_pro_row">
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Hazırım kanka!')">Hazırım</button>
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('Geliyorum!')">Geliyorum</button>
-    <button type="button" class="st_pro_btn primary" onclick="st_pro_send('GG / Helal!')">GG / Helal</button>
-    <button type="button" class="st_pro_btn" id="st_pro_sound_btn" onclick="st_pro_toggleSound()">Ses: Açık</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_cycleTheme()">Tema Değiştir</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_exportTxt()">Sohbeti .TXT İndir</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_copyRoom()">Oda Kopyala</button>
-    <button type="button" class="st_pro_btn" onclick="st_pro_clearRoom()">Odayı Temizle</button>
-  </div>
-
-  <div class="st_pro_grid_2">
-    <!-- Sol Kart: DB + Gemini Key + AI Asistan -->
-    <div class="st_pro_card">
-      <span class="st_pro_label">Firebase Realtime DB URL</span>
-      <input id="st_pro_db" class="st_pro_input" value="https://aetherchat25-default-rtdb.firebaseio.com" oninput="st_pro_save()" />
-
-      <span class="st_pro_label">Gemini API Key</span>
-      <input id="st_pro_key" class="st_pro_input" type="password" placeholder="AIza..." oninput="st_pro_save()" />
-
-      <span class="st_pro_label">Yapay Zeka Asistanı (Cevabı Odaya Gönderir)</span>
-      <div class="st_pro_row">
-        <input id="st_pro_ai_q" class="st_pro_input" style="flex:1" placeholder="AI'a soru sor veya fikir iste..." onkeydown="if(event.key==='Enter') st_pro_askAi()" />
-        <button type="button" class="st_pro_btn primary" id="st_pro_ai_btn" onclick="st_pro_askAi()">Sor</button>
-      </div>
-    </div>
-
-    <!-- Sağ Kart: Not Defteri + Satır/Punchline + Özel Hızlı Mesaj -->
-    <div class="st_pro_card">
-      <span class="st_pro_label">Stüdyo Not Defteri</span>
-      <textarea id="st_pro_note" class="st_pro_textarea" placeholder="Satır, punchline, taktik veya not yaz..." oninput="st_pro_save()"></textarea>
-
-      <div class="st_pro_row">
-        <button type="button" class="st_pro_btn" onclick="st_pro_noteToRoom()">Notu Odaya At</button>
-        <button type="button" class="st_pro_btn" onclick="st_pro_copyNote()">Notu Kopyala</button>
-        <button type="button" class="st_pro_btn" onclick="st_pro_punchline()">Satır İlhamı Ver</button>
-      </div>
-
-      <span class="st_pro_label">Özel Hızlı Mesaj Kısayolu</span>
-      <div class="st_pro_row">
-        <input id="st_pro_custom_q" class="st_pro_input" style="flex:1" placeholder="Örn: 5 dakikaya giriyorum" />
-        <button type="button" class="st_pro_btn primary" onclick="st_pro_sendCustom()">Hızlı At</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Odak / Kronometre Modülü -->
-  <div class="st_pro_timer_box">
-    <div>
-      <div class="st_pro_label">ODAK / KRONOMETRE SAYACI</div>
-      <div class="st_pro_clock_num" id="st_pro_stopwatch">00:00:00</div>
-    </div>
-    <div class="st_pro_row">
-      <button type="button" class="st_pro_btn primary" onclick="st_pro_swStart()">Başlat</button>
-      <button type="button" class="st_pro_btn" onclick="st_pro_swPause()">Durdur</button>
-      <button type="button" class="st_pro_btn" onclick="st_pro_swReset()">Sıfırla</button>
-    </div>
-  </div>
-
-  <div id="st_pro_status">Aether Studio Pro hazır.</div>
-</div>
-
-<script>
-  (function () {
-    const STORE_KEY = "aether_studio_pro_v1";
-    const THEMES = ["", "theme-purple", "theme-emerald"];
-    const LINES = [
-      "Sessiz kalabalıkta bile kendi ritmini kur, sözün tartısı ağırlığında olsun.",
-      "Haritada yerin belli, pusulan net; gürültüye değil hedefe odaklan.",
-      "Her satırda bir adım, her adımda biraz daha keskin kalem.",
-      "İsim değil duruş kalır; masaya oturduğunda oyun değişir."
-    ];
-
-    let themeIdx = 0;
-    let soundOn = true;
-    let audioCtx = null;
-    let sessionSec = 0;
-    let swSec = 0;
-    let swInterval = null;
-    let lastMsgCount = -1;
-
-    function status(msg) {
-      const el = document.getElementById("st_pro_status");
-      if (el) el.textContent = msg;
-    }
-
-    function getDb() {
-      const v = (document.getElementById("st_pro_db")?.value || "https://aetherchat25-default-rtdb.firebaseio.com").trim();
-      return v.replace(/\/+$/, "");
-    }
-
-    function getKey() {
-      return (document.getElementById("st_pro_key")?.value || "").trim();
-    }
-
-    function getRoom() {
-      const el = document.getElementById("room");
-      const raw = (el?.value || "alperen-yunus-1903").trim();
-      return raw.replace(/[^a-zA-Z0-9_-]/g, "_") || "alperen-yunus-1903";
-    }
-
-    function getNick() {
-      const el = document.getElementById("nick");
-      return (el?.value || "Yunus").trim() || "Yunus";
-    }
-
-    function beep() {
-      if (!soundOn) return;
-      try {
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = "triangle";
-        o.frequency.value = 660;
-        g.gain.value = 0.05;
-        o.connect(g);
-        g.connect(audioCtx.destination);
-        o.start();
-        o.stop(audioCtx.currentTime + 0.1);
-      } catch (_) {}
-    }
-
-    window.st_pro_save = function () {
-      try {
-        localStorage.setItem(STORE_KEY, JSON.stringify({
-          db: getDb(),
-          key: getKey(),
-          note: document.getElementById("st_pro_note")?.value || "",
-          custom: document.getElementById("st_pro_custom_q")?.value || "",
-          themeIdx,
-          soundOn
-        }));
-      } catch (_) {}
-    };
-
-    window.st_pro_send = async function (text) {
-      const clean = (text || "").trim();
-      if (!clean) return;
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            who: getNick(),
-            text: clean,
-            time: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
-            ts: Date.now()
-          })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        status(`Gönderildi: "${clean}"`);
-      } catch (e) {
-        status(`Gönderim hatası: ${e.message}`);
-      }
-    };
-
-    window.st_pro_sendCustom = async function () {
-      const inp = document.getElementById("st_pro_custom_q");
-      const val = (inp?.value || "").trim();
-      if (!val) {
-        status("Önce özel hızlı mesaj metni yaz.");
-        return;
-      }
-      st_pro_save();
-      await st_pro_send(val);
-    };
-
-    window.st_pro_toggleSound = function () {
-      soundOn = !soundOn;
-      const btn = document.getElementById("st_pro_sound_btn");
-      if (btn) btn.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
-      st_pro_save();
-      status(`Bildirim sesi ${soundOn ? "açıldı" : "kapatıldı"}.`);
-    };
-
-    window.st_pro_cycleTheme = function () {
-      const deck = document.getElementById("st_pro_deck");
-      if (!deck) return;
-      THEMES.forEach(t => t && deck.classList.remove(t));
-      themeIdx = (themeIdx + 1) % THEMES.length;
-      if (THEMES[themeIdx]) deck.classList.add(THEMES[themeIdx]);
-      st_pro_save();
-      const names = ["Cam Mavi", "Neon Mor", "Zümrüt Yeşil"];
-      status(`Tema: ${names[themeIdx]}`);
-    };
-
-    window.st_pro_copyRoom = function () {
-      const r = getRoom();
-      navigator.clipboard?.writeText(r).catch(() => {});
-      status(`Oda kodu kopyalandı: ${r}`);
-    };
-
-    window.st_pro_clearRoom = async function () {
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { method: "DELETE" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        lastMsgCount = 0;
-        status(`"${getRoom()}" odası temizlendi.`);
-      } catch (e) {
-        status(`Temizleme hatası: ${e.message}`);
-      }
-    };
-
-    window.st_pro_noteToRoom = async function () {
-      const txt = (document.getElementById("st_pro_note")?.value || "").trim();
-      if (!txt) {
-        status("Not defteri boş.");
-        return;
-      }
-      await st_pro_send(txt.slice(0, 800));
-    };
-
-    window.st_pro_copyNote = function () {
-      const txt = document.getElementById("st_pro_note")?.value || "";
-      navigator.clipboard?.writeText(txt).catch(() => {});
-      status("Not defteri panoya kopyalandı.");
-    };
-
-    window.st_pro_punchline = function () {
-      const pick = LINES[Math.floor(Math.random() * LINES.length)];
-      const ta = document.getElementById("st_pro_note");
-      if (ta) {
-        ta.value = ta.value ? `${ta.value}\n${pick}` : pick;
-        st_pro_save();
-      }
-      status("Yeni satır ilhamı not defterine eklendi.");
-    };
-
-    window.st_pro_exportTxt = async function () {
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
-        const data = await res.json();
-        const rows = data && typeof data === "object"
-          ? Object.values(data).sort((a, b) => (a.ts || 0) - (b.ts || 0))
-          : [];
-        const content = rows.map(r => `[${r.time || "--:--"}] ${r.who || "Anon"}: ${r.text || ""}`).join("\n");
-        const blob = new Blob([content || "Mesaj yok."], { type: "text/plain;charset=utf-8" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${getRoom()}_sohbet.txt`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        status("Sohbet .TXT dosyası indirildi.");
-      } catch (e) {
-        status(`İndirme hatası: ${e.message}`);
-      }
-    };
-
-    window.st_pro_askAi = async function () {
-      const key = getKey();
-      const inp = document.getElementById("st_pro_ai_q");
-      const btn = document.getElementById("st_pro_ai_btn");
-      const q = (inp?.value || "").trim();
-      if (!q) {
-        status("Önce AI'a soracağın şeyi yaz.");
-        return;
-      }
-      if (!key) {
-        status("AI için Gemini API Key alanına anahtarını gir.");
-        return;
-      }
-      st_pro_save();
-      if (btn) btn.disabled = true;
-      status("AI yanıt hazırlıyor...");
-
-      try {
-        await st_pro_send(`AI Soru: ${q}`);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
-        const r = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Kısa, akıcı ve doğal Türkçe cevap ver: ${q}` }] }]
-          })
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j?.error?.message || `HTTP ${r.status}`);
-        const ans = j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Yanıt alınamadı.";
-        await st_pro_send(`AI: ${ans.slice(0, 1000)}`);
-        if (inp) inp.value = "";
-        beep();
-        status("AI cevabı odaya eklendi.");
-      } catch (e) {
-        status(`AI hatası: ${e.message}`);
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    };
-
-    function fmtHMS(total) {
-      const h = String(Math.floor(total / 3600)).padStart(2, "0");
-      const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
-      const s = String(total % 60).padStart(2, "0");
-      return `${h}:${m}:${s}`;
-    }
-
-    function renderClock() {
-      const el = document.getElementById("st_pro_stopwatch");
-      if (el) el.textContent = fmtHMS(swSec);
-    }
-
-    window.st_pro_swStart = function () {
-      if (swInterval) return;
-      swInterval = setInterval(() => {
-        swSec += 1;
-        renderClock();
-      }, 1000);
-      status("Kronometre başlatıldı.");
-    };
-
-    window.st_pro_swPause = function () {
-      if (swInterval) {
-        clearInterval(swInterval);
-        swInterval = null;
-      }
-      status("Kronometre duraklatıldı.");
-    };
-
-    window.st_pro_swReset = function () {
-      st_pro_swPause();
-      swSec = 0;
-      renderClock();
-      status("Kronometre sıfırlandı.");
-    };
-
-    async function refreshStats() {
-      try {
-        const res = await fetch(`${getDb()}/rooms/${encodeURIComponent(getRoom())}.json`, { cache: "no-store" });
-        const data = await res.json();
-        const count = data && typeof data === "object" ? Object.keys(data).length : 0;
-        const badge = document.getElementById("st_pro_msg_count");
-        if (badge) badge.textContent = `Mesaj: ${count}`;
-        if (lastMsgCount !== -1 && count > lastMsgCount) {
-          beep();
-        }
-        lastMsgCount = count;
-      } catch (_) {}
-    }
-
-    setInterval(() => {
-      sessionSec += 1;
-      const nowEl = document.getElementById("st_pro_now");
-      const sesEl = document.getElementById("st_pro_session");
-      if (nowEl) nowEl.textContent = new Date().toLocaleTimeString("tr-TR");
-      if (sesEl) {
-        const mm = String(Math.floor(sessionSec / 60)).padStart(2, "0");
-        const ss = String(sessionSec % 60).padStart(2, "0");
-        sesEl.textContent = `Oturum: ${mm}:${ss}`;
-      }
-    }, 1000);
-
-    setInterval(refreshStats, 3000);
-    refreshStats();
-
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        const d = JSON.parse(raw);
-        if (d.db && document.getElementById("st_pro_db")) document.getElementById("st_pro_db").value = d.db;
-        if (d.key && document.getElementById("st_pro_key")) document.getElementById("st_pro_key").value = d.key;
-        if (typeof d.note === "string" && document.getElementById("st_pro_note")) document.getElementById("st_pro_note").value = d.note;
-        if (typeof d.custom === "string" && document.getElementById("st_pro_custom_q")) document.getElementById("st_pro_custom_q").value = d.custom;
-        if (typeof d.soundOn === "boolean") {
-          soundOn = d.soundOn;
-          const b = document.getElementById("st_pro_sound_btn");
-          if (b) b.textContent = `Ses: ${soundOn ? "Açık" : "Kapalı"}`;
-        }
-        if (typeof d.themeIdx === "number" && THEMES[d.themeIdx]) {
-          themeIdx = d.themeIdx;
-          document.getElementById("st_pro_deck")?.classList.add(THEMES[themeIdx]);
-        }
-      }
-    } catch (_) {}
-  })();
-</script>
+      const sesEl = document.getElementById("st_pro_session
